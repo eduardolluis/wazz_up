@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wazz_up/pages/chat_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,14 +35,38 @@ class _HomeScreenState extends State<HomeScreen>
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: cs.primary,
-        foregroundColor: Colors.white, 
+        foregroundColor: Colors.white,
         elevation: 0,
-        surfaceTintColor: Colors.transparent, 
-        actions: const [
-          Icon(Icons.search),
-          SizedBox(width: 8),
-          Icon(Icons.more_vert),
-          SizedBox(width: 8),
+        surfaceTintColor: Colors.transparent,
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.search, color: Colors.white),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: (value) {
+              print(value);
+            },
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem(value: "New group", child: Text("New group")),
+                PopupMenuItem(
+                  value: "New broadcast",
+                  child: Text("New broadcast"),
+                ),
+                PopupMenuItem(
+                  value: "Linked devices",
+                  child: Text("Linked devices"),
+                ),
+                PopupMenuItem(
+                  value: "Starred messages",
+                  child: Text("Starred messages"),
+                ),
+                PopupMenuItem(value: "Settings", child: Text("Settings")),
+              ];
+            },
+          ),
         ],
         bottom: TabBar(
           controller: _controller,
@@ -58,9 +83,9 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       body: TabBarView(
         controller: _controller,
-        children: const [
+        children: [
           Center(child: Text("Camera")),
-          Center(child: Text("Chats")),
+          Center(child: ChatPage()),
           Center(child: Text("Status")),
           Center(child: Text("Calls")),
         ],
