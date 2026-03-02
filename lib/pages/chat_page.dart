@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wazz_up/customUI/custom_card.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -15,6 +16,7 @@ class _ChatPageState extends State<ChatPage> {
         onPressed: () {},
         child: Icon(Icons.chat),
       ),
+      body: ListView(children: [CustomCard(), CustomCard()]),
     );
   }
 }
