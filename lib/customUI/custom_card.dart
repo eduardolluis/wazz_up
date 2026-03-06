@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:wazz_up/model/chat_model.dart';
+import 'package:wazz_up/screens/individual_page.dart';
 
 class CustomCard extends StatelessWidget {
-  const CustomCard({super.key});
+  const CustomCard({super.key, required this.chatModel});
+  final ChatModel chatModel;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => IndividualPage()),
+        );
+      },
       child: Column(
         children: [
           ListTile(
@@ -15,24 +23,21 @@ class CustomCard extends StatelessWidget {
               radius: 30,
               backgroundColor: Colors.blueGrey,
               child: SvgPicture.asset(
-                "assets/groups.svg",
+                chatModel.isGroup ? "assets/groups.svg" : "assets/person.svg",
                 colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
                 height: 37,
                 width: 37,
               ),
             ),
-            title: Text(
-              "Dev Stack",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            title: Text(chatModel.name),
             subtitle: Row(
               children: [
                 Icon(Icons.done_all),
                 SizedBox(width: 3),
-                Text('Hi dev stack', style: TextStyle(fontSize: 13)),
+                Text(chatModel.currentMessage, style: TextStyle(fontSize: 13)),
               ],
             ),
-            trailing: Text("18:04"),
+            trailing: Text(chatModel.time),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 20, left: 80),
