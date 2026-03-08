@@ -2,6 +2,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:wazz_up/model/chat_model.dart';
+import 'package:wazz_up/widgets/attachment_menu_widget.dart';
 import 'package:wazz_up/widgets/emoji_picker_widget.dart';
 
 class IndividualPage extends StatefulWidget {
@@ -186,12 +187,17 @@ class _IndividualPageState extends State<IndividualPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
-                                    onPressed: () {},
-                                    icon: const Icon(Icons.camera_alt_rounded),
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (builder) => AttachmentMenu(),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.attach_file),
                                   ),
                                   IconButton(
                                     onPressed: () {},
-                                    icon: const Icon(Icons.attach_file),
+                                    icon: const Icon(Icons.camera_alt_rounded),
                                   ),
                                 ],
                               ),
