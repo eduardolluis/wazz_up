@@ -14,16 +14,16 @@ class ContactCard extends StatelessWidget {
         width: 50,
         child: Stack(
           children: [
-            CircleAvatar(
-              radius: 23,
-              backgroundColor: Colors.blueGrey[200],
-              child: SvgPicture.asset(
-                "assets/person.svg",
-                colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                height: 30,
-                width: 30,
+              CircleAvatar(
+                radius: 23,
+                backgroundColor: Colors.blueGrey[200],
+                child: SvgPicture.asset(
+                  "assets/person.svg",
+                  colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                  height: 30,
+                  width: 30,
+                ),
               ),
-            ),
             contact.select
                 ? Positioned(
                     bottom: 4,

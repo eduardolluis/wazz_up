@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wazz_up/customUI/Avatar_card.dart';
 import 'package:wazz_up/customUI/contact_card.dart';
 import 'package:wazz_up/data/contact_data.dart';
 import 'package:wazz_up/model/chat_model.dart';
@@ -11,10 +12,12 @@ class CreateGroupPage extends StatefulWidget {
 }
 
 class _CreateGroupPageState extends State<CreateGroupPage> {
+  List<ChatModel> groupMember = [];
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    List<ChatModel> group = [];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: cs.primary,
@@ -31,7 +34,10 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           ],
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.search, size: 26)),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.search, size: 26),
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
@@ -51,26 +57,62 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: contacts.length,
-        itemBuilder: (BuildContext context, int index) {
-          return InkWell(
-            onTap: () {
-              if (contacts[index].select == false) {
-                setState(() {
-                  contacts[index].select = true;
-                  group.add(contacts[index]);
-                });
-              } else {
-                setState(() {
-                  contacts[index].select = false;
-                  group.remove(contacts[index]);
-                });
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: contacts.length + 1,
+            itemBuilder: (BuildContext context, int index) {
+              if (index == 0) {
+                return Container(height: groupMember.isNotEmpty ? 90 : 10);
               }
+
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    if (contacts[index - 1].select == true) {
+                      contacts[index - 1].select = false;
+                      groupMember.remove(contacts[index - 1]);
+                    } else {
+                      contacts[index - 1].select = true;
+                      groupMember.add(contacts[index - 1]);
+                    }
+                  });
+                },
+                child: ContactCard(contact: contacts[index - 1]),
+              );
             },
-            child: ContactCard(contact: contacts[index]),
-          );
-        },
+          ),
+          groupMember.isNotEmpty
+              ? Column(
+                  children: [
+                    Container(
+                      height: 75,
+                      color: Colors.white,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: contacts.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          if (contacts[index].select == true) {
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  groupMember.remove(contacts[index]);
+                                  contacts[index].select = false;
+                                });
+                              },
+                              child: AvatarCard(contact: contacts[index]),
+                            );
+                          } else {
+                            return Container();
+                          }
+                        },
+                      ),
+                    ),
+                    const Divider(thickness: 1),
+                  ],
+                )
+              : Container(),
+        ],
       ),
     );
   }
