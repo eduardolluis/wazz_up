@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:wazz_up/model/chat_model.dart';
-import 'package:wazz_up/screens/individual_page.dart';
+import 'package:wazz_up/screens/individual_screen.dart';
 
 class CustomCard extends StatelessWidget {
   const CustomCard({super.key, required this.chatModel});

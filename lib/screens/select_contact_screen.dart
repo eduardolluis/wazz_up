@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wazz_up/customUI/button_card.dart';
 import 'package:wazz_up/customUI/contact_card.dart';
-import 'package:wazz_up/model/chat_model.dart';
+import 'package:wazz_up/screens/create_group_screen.dart';
+import 'package:wazz_up/data/contact_data.dart';
 
 class SelectContactPage extends StatefulWidget {
   const SelectContactPage({super.key});
@@ -15,40 +16,7 @@ class _SelectContactPageState extends State<SelectContactPage> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    List<ChatModel> contacts = [
-      ChatModel(
-        name: 'Eduardo',
-        icon: 'person.svg',
-        isGroup: false,
-        time: '18:04',
-        currentMessage: 'Hi there',
-        status: 'A full stack developer',
-      ),
-      ChatModel(
-        name: 'Marcos',
-        icon: 'person.svg',
-        isGroup: false,
-        time: '18:04',
-        currentMessage: 'hellouuu there',
-        status: ' x  developer',
-      ),
-      ChatModel(
-        name: 'dadada',
-        icon: 'person.svg',
-        isGroup: false,
-        time: '18:04',
-        currentMessage: 'hellouuu there',
-        status: ' junior  ',
-      ),
-      ChatModel(
-        name: 'malcom',
-        icon: 'person.svg',
-        isGroup: false,
-        time: '18:04',
-        currentMessage: 'klk cabeza ',
-        status: 'fronted  ',
-      ),
-    ];
+  
 
     return Scaffold(
       appBar: AppBar(
@@ -90,7 +58,15 @@ class _SelectContactPageState extends State<SelectContactPage> {
         itemCount: contacts.length + 2,
         itemBuilder: (BuildContext context, index) {
           if (index == 0) {
-            return ButtonCard(icon: Icons.group, name: "New Group");
+            return InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (builder) => CreateGroupPage()),
+                );
+              },
+              child: ButtonCard(icon: Icons.group, name: "New Group"),
+            );
           } else if (index == 1) {
             return ButtonCard(icon: Icons.person_add, name: "New Contact");
           } else {
