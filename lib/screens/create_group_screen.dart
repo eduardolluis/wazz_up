@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wazz_up/customUI/Avatar_card.dart';
+import 'package:wazz_up/customUI/avatar_card.dart';
 import 'package:wazz_up/customUI/contact_card.dart';
 import 'package:wazz_up/data/contact_data.dart';
 import 'package:wazz_up/model/chat_model.dart';

@@ -1,5 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:wazz_up/screens/camera_view.dart';
 
 List<CameraDescription> cameras = [];
 
@@ -19,6 +22,12 @@ class _CameraScreenState extends State<CameraScreen> {
     super.initState();
     _cameraController = CameraController(cameras[0], ResolutionPreset.high);
     cameraValue = _cameraController.initialize();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _cameraController.dispose();
   }
 
   @override
@@ -57,9 +66,10 @@ class _CameraScreenState extends State<CameraScreen> {
                         ),
                       ),
                       InkWell(
-                        onTap: () {},
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            takePhoto(context);
+                          },
                           icon: Icon(
                             Icons.panorama_fish_eye,
                             color: Colors.white,
@@ -89,6 +99,25 @@ class _CameraScreenState extends State<CameraScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void takePhoto(BuildContext context) async {
+    final navigator = Navigator.of(context);
+
+    final XFile photo = await _cameraController.takePicture();
+
+    final path = join(
+      (await getTemporaryDirectory()).path,
+      "${DateTime.now()}.png",
+    );
+
+    await photo.saveTo(path);
+
+    if (!mounted) return;
+
+    navigator.push(
+      MaterialPageRoute(builder: (context) => CameraView(path: path)),
     );
   }
 }
