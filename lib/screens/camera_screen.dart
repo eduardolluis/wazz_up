@@ -15,8 +15,11 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   late CameraController _cameraController;
   late Future<void> cameraValue;
+
   bool isRecording = false;
-  String? path;
+  int currentCameraIndex = 0;
+  FlashMode currentFlashMode = FlashMode.off;
+
   @override
   void initState() {
     super.initState();
@@ -25,13 +28,65 @@ class _CameraScreenState extends State<CameraScreen> {
       throw Exception("No hay cámaras disponibles");
     }
 
+    _initializeCamera(currentCameraIndex);
+  }
+
+  Future<void> _initializeCamera(int cameraIndex) async {
     _cameraController = CameraController(
-      cameras[0],
+      cameras[cameraIndex],
       ResolutionPreset.high,
       enableAudio: true,
     );
 
     cameraValue = _cameraController.initialize();
+
+    try {
+      await cameraValue;
+
+      // Intenta aplicar el flash actual a la nueva cámara.
+      // En algunas cámaras frontales puede no estar soportado.
+      await _cameraController.setFlashMode(currentFlashMode);
+
+      if (mounted) {
+        setState(() {});
+      }
+    } on CameraException catch (e) {
+      debugPrint("Error al inicializar cámara: ${e.description}");
+    }
+  }
+
+  Future<void> _toggleFlash() async {
+    try {
+      if (!_cameraController.value.isInitialized) return;
+
+      // Alterna entre apagado y torch
+      final FlashMode newMode = currentFlashMode == FlashMode.off
+          ? FlashMode.torch
+          : FlashMode.off;
+
+      await _cameraController.setFlashMode(newMode);
+
+      if (!mounted) return;
+      setState(() {
+        currentFlashMode = newMode;
+      });
+    } on CameraException catch (e) {
+      debugPrint("Error al cambiar flash: ${e.description}");
+    }
+  }
+
+  Future<void> _flipCamera() async {
+    if (cameras.length < 2) return;
+    if (isRecording) return;
+
+    try {
+      currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+
+      await _cameraController.dispose();
+      await _initializeCamera(currentCameraIndex);
+    } on CameraException catch (e) {
+      debugPrint("Error al cambiar cámara: ${e.description}");
+    }
   }
 
   @override
@@ -43,12 +98,21 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           FutureBuilder<void>(
             future: cameraValue,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
+                if (!_cameraController.value.isInitialized) {
+                  return const Center(
+                    child: Text(
+                      'La cámara no está inicializada',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
                 return CameraPreview(_cameraController);
               } else if (snapshot.hasError) {
                 return const Center(
@@ -75,9 +139,11 @@ class _CameraScreenState extends State<CameraScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
-                        onPressed: () {},
-                        icon: const Icon(
-                          Icons.flash_off,
+                        onPressed: _toggleFlash,
+                        icon: Icon(
+                          currentFlashMode == FlashMode.off
+                              ? Icons.flash_off
+                              : Icons.flash_on,
                           color: Colors.white,
                           size: 28,
                         ),
@@ -85,10 +151,13 @@ class _CameraScreenState extends State<CameraScreen> {
                       GestureDetector(
                         onLongPress: () async {
                           try {
+                            if (!_cameraController.value.isInitialized) return;
+                            if (_cameraController.value.isRecordingVideo)
+                              return;
+
                             await _cameraController.startVideoRecording();
 
                             if (!mounted) return;
-
                             setState(() {
                               isRecording = true;
                             });
@@ -100,6 +169,9 @@ class _CameraScreenState extends State<CameraScreen> {
                         },
                         onLongPressUp: () async {
                           try {
+                            if (!_cameraController.value.isRecordingVideo)
+                              return;
+
                             final XFile video = await _cameraController
                                 .stopVideoRecording();
 
@@ -136,7 +208,7 @@ class _CameraScreenState extends State<CameraScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: _flipCamera,
                         icon: const Icon(
                           Icons.flip_camera_ios,
                           color: Colors.white,
@@ -162,8 +234,10 @@ class _CameraScreenState extends State<CameraScreen> {
 
   void takePhoto(BuildContext context) async {
     try {
-      final navigator = Navigator.of(context);
+      if (!_cameraController.value.isInitialized) return;
+      if (_cameraController.value.isTakingPicture) return;
 
+      final navigator = Navigator.of(context);
       final XFile photo = await _cameraController.takePicture();
 
       if (!mounted) return;
