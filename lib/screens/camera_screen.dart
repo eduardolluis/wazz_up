@@ -1,8 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:wazz_up/screens/camera_view.dart';
+import 'package:wazz_up/screens/video_screen.dart';
 
 List<CameraDescription> cameras = [];
 
@@ -16,18 +15,29 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   late CameraController _cameraController;
   late Future<void> cameraValue;
-
+  bool isRecording = false;
+  String? path;
   @override
   void initState() {
     super.initState();
-    _cameraController = CameraController(cameras[0], ResolutionPreset.high);
+
+    if (cameras.isEmpty) {
+      throw Exception("No hay cámaras disponibles");
+    }
+
+    _cameraController = CameraController(
+      cameras[0],
+      ResolutionPreset.high,
+      enableAudio: true,
+    );
+
     cameraValue = _cameraController.initialize();
   }
 
   @override
   void dispose() {
-    super.dispose();
     _cameraController.dispose();
+    super.dispose();
   }
 
   @override
@@ -35,51 +45,99 @@ class _CameraScreenState extends State<CameraScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          FutureBuilder(
+          FutureBuilder<void>(
             future: cameraValue,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.done) {
                 return CameraPreview(_cameraController);
+              } else if (snapshot.hasError) {
+                return const Center(
+                  child: Text(
+                    'Error al inicializar la cámara',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                );
               } else {
                 return const Center(child: CircularProgressIndicator());
               }
             },
           ),
           Positioned(
-            bottom: 0.0,
+            bottom: 0,
+            left: 0,
+            right: 0,
             child: Container(
               color: Colors.black,
-              padding: EdgeInsets.only(top: 5, bottom: 5),
-              width: MediaQuery.of(context).size.width,
+              padding: const EdgeInsets.symmetric(vertical: 5),
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.flash_off,
                           color: Colors.white,
                           size: 28,
                         ),
                       ),
-                      InkWell(
-                        child: IconButton(
-                          onPressed: () {
+                      GestureDetector(
+                        onLongPress: () async {
+                          try {
+                            await _cameraController.startVideoRecording();
+
+                            if (!mounted) return;
+
+                            setState(() {
+                              isRecording = true;
+                            });
+                          } on CameraException catch (e) {
+                            debugPrint(
+                              "Error al iniciar video: ${e.description}",
+                            );
+                          }
+                        },
+                        onLongPressUp: () async {
+                          try {
+                            final XFile video = await _cameraController
+                                .stopVideoRecording();
+
+                            if (!mounted) return;
+
+                            setState(() {
+                              isRecording = false;
+                            });
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    VideoScreen(path: video.path),
+                              ),
+                            );
+                          } on CameraException catch (e) {
+                            debugPrint(
+                              "Error al detener video: ${e.description}",
+                            );
+                          }
+                        },
+                        onTap: () {
+                          if (!isRecording) {
                             takePhoto(context);
-                          },
-                          icon: Icon(
-                            Icons.panorama_fish_eye,
-                            color: Colors.white,
-                            size: 70,
-                          ),
+                          }
+                        },
+                        child: Icon(
+                          isRecording
+                              ? Icons.radio_button_on
+                              : Icons.panorama_fish_eye,
+                          color: isRecording ? Colors.red : Colors.white,
+                          size: isRecording ? 80 : 70,
                         ),
                       ),
                       IconButton(
                         onPressed: () {},
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.flip_camera_ios,
                           color: Colors.white,
                           size: 28,
@@ -87,8 +145,8 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 4),
+                  const Text(
                     "Hold for video, tap for photo",
                     style: TextStyle(color: Colors.white, fontSize: 12),
                     textAlign: TextAlign.center,
@@ -103,21 +161,18 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   void takePhoto(BuildContext context) async {
-    final navigator = Navigator.of(context);
+    try {
+      final navigator = Navigator.of(context);
 
-    final XFile photo = await _cameraController.takePicture();
+      final XFile photo = await _cameraController.takePicture();
 
-    final path = join(
-      (await getTemporaryDirectory()).path,
-      "${DateTime.now()}.png",
-    );
+      if (!mounted) return;
 
-    await photo.saveTo(path);
-
-    if (!mounted) return;
-
-    navigator.push(
-      MaterialPageRoute(builder: (context) => CameraView(path: path)),
-    );
+      navigator.push(
+        MaterialPageRoute(builder: (context) => CameraView(path: photo.path)),
+      );
+    } on CameraException catch (e) {
+      debugPrint("Error al tomar foto: ${e.description}");
+    }
   }
 }
