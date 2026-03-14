@@ -4,8 +4,9 @@ import 'package:wazz_up/pages/camera_page.dart';
 import 'package:wazz_up/pages/chat_page.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.chatmodels});
+  const HomeScreen({super.key, required this.chatmodels, required this.sourceChat});
   final List<ChatModel> chatmodels;
+  final ChatModel sourceChat;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -88,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _controller,
         children: [
           Center(child: CameraPage()),
-          Center(child: ChatPage(chatmodels: widget.chatmodels)),
+          Center(child: ChatPage(chatmodels: widget.chatmodels, sourceChat: widget.sourceChat,)),
           Center(child: Text("Status")),
           Center(child: Text("Calls")),
         ],

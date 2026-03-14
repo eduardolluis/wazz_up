@@ -5,11 +5,16 @@ import 'package:wazz_up/customUI/reply_card.dart';
 import 'package:wazz_up/model/chat_model.dart';
 import 'package:wazz_up/widgets/attachment_menu_widget.dart';
 import 'package:wazz_up/widgets/emoji_picker_widget.dart';
-import "package:socket_io_client/socket_io_client.dart" as IO;
+import "package:socket_io_client/socket_io_client.dart" as io;
 
 class IndividualPage extends StatefulWidget {
-  const IndividualPage({super.key, required this.chatModel});
+  const IndividualPage({
+    super.key,
+    required this.chatModel,
+    required this.sourceChat,
+  });
   final ChatModel chatModel;
+  final ChatModel sourceChat;
 
   @override
   State<IndividualPage> createState() => _IndividualPageState();
@@ -18,7 +23,7 @@ class IndividualPage extends StatefulWidget {
 class _IndividualPageState extends State<IndividualPage> {
   bool show = false;
   final FocusNode focusNode = FocusNode();
-  late IO.Socket socket;
+  late io.Socket socket;
   bool sendButton = false;
 
   final TextEditingController _controller = TextEditingController();
@@ -44,15 +49,24 @@ class _IndividualPageState extends State<IndividualPage> {
   }
 
   void connect() {
-    socket = IO.io("http://10.0.2.2:5000", <String, dynamic>{
+    socket = io.io("http://10.0.2.2:5000", <String, dynamic>{
       "transports": ["websocket"],
       "autoConnect": false,
     });
     socket.connect();
-    socket.emit("/test", "hello world");
+    socket.emit("signin", widget.sourceChat.id);
 
     socket.onConnect((data) => print("connected"));
     print(socket.connected);
+  }
+
+  void sendMessage(String message, int sourceId, int targetId) {
+    if (message.trim().isEmpty) return;
+    socket.emit("message", {
+      "message": message,
+      "sourceId": widget.sourceChat.id,
+      "targetId": widget.chatModel.id,
+    });
   }
 
   @override
@@ -288,7 +302,16 @@ class _IndividualPageState extends State<IndividualPage> {
                                   sendButton ? Icons.send : Icons.mic,
                                   color: Colors.white,
                                 ),
-                                onPressed: () {},
+                                onPressed: () {
+                                  if (sendButton) {
+                                    sendMessage(
+                                      _controller.text,
+                                      widget.sourceChat.id,
+                                      widget.chatModel.id,
+                                    );
+                                    _controller.clear();
+                                  }
+                                },
                               ),
                             ),
                           ),

@@ -4,8 +4,9 @@ import 'package:wazz_up/model/chat_model.dart';
 import 'package:wazz_up/screens/individual_screen.dart';
 
 class CustomCard extends StatelessWidget {
-  const CustomCard({super.key, required this.chatModel});
+  const CustomCard({super.key, required this.chatModel, required this.sourceChat});
   final ChatModel chatModel;
+  final ChatModel sourceChat;
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +15,7 @@ class CustomCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => IndividualPage(chatModel: chatModel),
+            builder: (context) => IndividualPage(chatModel: chatModel, sourceChat: sourceChat,),
           ),
         );
       },

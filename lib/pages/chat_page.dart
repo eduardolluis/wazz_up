@@ -5,8 +5,13 @@ import 'package:wazz_up/screens/select_contact_screen.dart';
 import 'package:wazz_up/data/contact_data.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key, required this.chatmodels});
+  const ChatPage({
+    super.key,
+    required this.chatmodels,
+    required this.sourceChat,
+  });
   final List<ChatModel> chatmodels;
+  final ChatModel sourceChat;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -28,7 +33,10 @@ class _ChatPageState extends State<ChatPage> {
       body: ListView.builder(
         itemCount: widget.chatmodels.length,
         itemBuilder: (context, index) {
-          return CustomCard(chatModel: widget.chatmodels[index]);
+          return CustomCard(
+            chatModel: widget.chatmodels[index],
+            sourceChat: widget.sourceChat,
+          );
         },
       ),
     );
