@@ -19,6 +19,8 @@ class _IndividualPageState extends State<IndividualPage> {
   bool show = false;
   final FocusNode focusNode = FocusNode();
   late IO.Socket socket;
+  bool sendButton = false;
+
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -214,6 +216,17 @@ class _IndividualPageState extends State<IndividualPage> {
                                 keyboardType: TextInputType.multiline,
                                 maxLines: 5,
                                 minLines: 1,
+                                onChanged: (value) {
+                                  if (value.isNotEmpty) {
+                                    setState(() {
+                                      sendButton = true;
+                                    });
+                                  } else {
+                                    setState(() {
+                                      sendButton = false;
+                                    });
+                                  }
+                                },
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
                                   hintText: "Type a message",
@@ -271,8 +284,8 @@ class _IndividualPageState extends State<IndividualPage> {
                               radius: 20,
                               backgroundColor: cs.secondary,
                               child: IconButton(
-                                icon: const Icon(
-                                  Icons.mic,
+                                icon: Icon(
+                                  sendButton ? Icons.send : Icons.mic,
                                   color: Colors.white,
                                 ),
                                 onPressed: () {},

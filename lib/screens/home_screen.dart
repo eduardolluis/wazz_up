@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:wazz_up/model/chat_model.dart';
 import 'package:wazz_up/pages/camera_page.dart';
 import 'package:wazz_up/pages/chat_page.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.chatmodels});
+  final List<ChatModel> chatmodels;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -16,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _controller = TabController(length: 4, vsync: this, initialIndex: 0);
+    _controller = TabController(length: 4, vsync: this, initialIndex: 1);
   }
 
   @override
@@ -86,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _controller,
         children: [
           Center(child: CameraPage()),
-          Center(child: ChatPage()),
+          Center(child: ChatPage(chatmodels: widget.chatmodels)),
           Center(child: Text("Status")),
           Center(child: Text("Calls")),
         ],
