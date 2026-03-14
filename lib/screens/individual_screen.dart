@@ -5,6 +5,7 @@ import 'package:wazz_up/customUI/reply_card.dart';
 import 'package:wazz_up/model/chat_model.dart';
 import 'package:wazz_up/widgets/attachment_menu_widget.dart';
 import 'package:wazz_up/widgets/emoji_picker_widget.dart';
+import "package:socket_io_client/socket_io_client.dart" as IO;
 
 class IndividualPage extends StatefulWidget {
   const IndividualPage({super.key, required this.chatModel});
@@ -17,12 +18,13 @@ class IndividualPage extends StatefulWidget {
 class _IndividualPageState extends State<IndividualPage> {
   bool show = false;
   final FocusNode focusNode = FocusNode();
+  late IO.Socket socket;
   final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-
+    connect();
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
         setState(() {
@@ -37,6 +39,18 @@ class _IndividualPageState extends State<IndividualPage> {
     focusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void connect() {
+    socket = IO.io("http://10.0.2.2:5000", <String, dynamic>{
+      "transports": ["websocket"],
+      "autoConnect": false,
+    });
+    socket.connect();
+    socket.emit("/test", "hello world");
+
+    socket.onConnect((data) => print("connected"));
+    print(socket.connected);
   }
 
   @override
@@ -158,7 +172,7 @@ class _IndividualPageState extends State<IndividualPage> {
             },
             child: Stack(
               children: [
-                Container(
+                SizedBox(
                   height: MediaQuery.of(context).size.height - 140,
                   child: ListView(
                     shrinkWrap: true,

@@ -152,8 +152,9 @@ class _CameraScreenState extends State<CameraScreen> {
                         onLongPress: () async {
                           try {
                             if (!_cameraController.value.isInitialized) return;
-                            if (_cameraController.value.isRecordingVideo)
+                            if (_cameraController.value.isRecordingVideo) {
                               return;
+                            }
 
                             await _cameraController.startVideoRecording();
 
@@ -169,8 +170,9 @@ class _CameraScreenState extends State<CameraScreen> {
                         },
                         onLongPressUp: () async {
                           try {
-                            if (!_cameraController.value.isRecordingVideo)
+                            if (!_cameraController.value.isRecordingVideo) {
                               return;
+                            }
 
                             final XFile video = await _cameraController
                                 .stopVideoRecording();
