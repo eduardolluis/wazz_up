@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wazz_up/customUI/button_card.dart';
-import 'package:wazz_up/model/chat_model.dart';
-import 'package:wazz_up/screens/home_screen.dart';
+import 'package:whatzapp/customUI/button_card.dart';
+import 'package:whatzapp/model/chat_model.dart';
+import 'package:whatzapp/screens/home_screen.dart';
 
 class LoginScreenPage extends StatefulWidget {
   const LoginScreenPage({super.key});
@@ -64,7 +64,10 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
             sourceChat = chatModels.removeAt(index);
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (builder) => HomeScreen(chatmodels: chatModels, sourceChat: sourceChat,)),
+              MaterialPageRoute(
+                builder: (builder) =>
+                    HomeScreen(chatmodels: chatModels, sourceChat: sourceChat),
+              ),
             );
           },
           child: ButtonCard(name: chatModels[index].name, icon: Icons.person),

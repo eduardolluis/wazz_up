@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:wazz_up/customUI/avatar_card.dart';
-import 'package:wazz_up/customUI/contact_card.dart';
-import 'package:wazz_up/data/contact_data.dart';
-import 'package:wazz_up/model/chat_model.dart';
+import 'package:whatzapp/customUI/avatar_card.dart';
+import 'package:whatzapp/customUI/contact_card.dart';
+import 'package:whatzapp/data/contact_data.dart';
+import 'package:whatzapp/model/chat_model.dart';
 
 class CreateGroupPage extends StatefulWidget {
   const CreateGroupPage({super.key});

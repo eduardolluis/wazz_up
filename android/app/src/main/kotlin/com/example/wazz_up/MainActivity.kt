@@ -1,4 +1,4 @@
-package com.example.wazz_up
+package com.example.whatzapp
 
 import io.flutter.embedding.android.FlutterActivity
 

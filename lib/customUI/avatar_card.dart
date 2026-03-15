@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:wazz_up/model/chat_model.dart';
+import 'package:whatzapp/model/chat_model.dart';
 
 class AvatarCard extends StatelessWidget {
   const AvatarCard({super.key, required this.contact});

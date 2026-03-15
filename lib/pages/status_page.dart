@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:wazz_up/customUI/StatusPage/head_own_status.dart';
-import 'package:wazz_up/customUI/StatusPage/other_status.dart';
+import 'package:whatzapp/customUI/StatusPage/head_own_status.dart';
+import 'package:whatzapp/customUI/StatusPage/other_status.dart';
 
 class StatusPage extends StatefulWidget {
   const StatusPage({super.key});

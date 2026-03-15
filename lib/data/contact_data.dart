@@ -1,4 +1,4 @@
-import 'package:wazz_up/model/chat_model.dart';
+import 'package:whatzapp/model/chat_model.dart';
 
 List<ChatModel> contacts = [
   ChatModel(

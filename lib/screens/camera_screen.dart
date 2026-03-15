@@ -1,7 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:wazz_up/screens/camera_view.dart';
-import 'package:wazz_up/screens/video_screen.dart';
+import 'package:whatzapp/screens/camera_view.dart';
+import 'package:whatzapp/screens/video_screen.dart';
 
 List<CameraDescription> cameras = [];
 

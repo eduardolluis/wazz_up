@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:wazz_up/model/chat_model.dart';
-import 'package:wazz_up/screens/individual_screen.dart';
+import 'package:whatzapp/model/chat_model.dart';
+import 'package:whatzapp/screens/individual_screen.dart';
 
 class CustomCard extends StatelessWidget {
-  const CustomCard({super.key, required this.chatModel, required this.sourceChat});
+  const CustomCard({
+    super.key,
+    required this.chatModel,
+    required this.sourceChat,
+  });
   final ChatModel chatModel;
   final ChatModel sourceChat;
 
@@ -15,7 +19,8 @@ class CustomCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => IndividualPage(chatModel: chatModel, sourceChat: sourceChat,),
+            builder: (context) =>
+                IndividualPage(chatModel: chatModel, sourceChat: sourceChat),
           ),
         );
       },

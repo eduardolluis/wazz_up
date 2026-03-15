@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:wazz_up/customUI/button_card.dart';
-import 'package:wazz_up/customUI/contact_card.dart';
-import 'package:wazz_up/screens/create_group_screen.dart';
-import 'package:wazz_up/data/contact_data.dart';
+import 'package:whatzapp/customUI/button_card.dart';
+import 'package:whatzapp/customUI/contact_card.dart';
+import 'package:whatzapp/screens/create_group_screen.dart';
+import 'package:whatzapp/data/contact_data.dart';
 
 class SelectContactPage extends StatefulWidget {
   const SelectContactPage({super.key});
@@ -15,8 +15,6 @@ class _SelectContactPageState extends State<SelectContactPage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-  
 
     return Scaffold(
       appBar: AppBar(

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:wazz_up/customUI/message_card.dart';
-import 'package:wazz_up/customUI/reply_card.dart';
-import 'package:wazz_up/model/chat_model.dart';
-import 'package:wazz_up/model/message_model.dart';
-import 'package:wazz_up/widgets/attachment_menu_widget.dart';
-import 'package:wazz_up/widgets/emoji_picker_widget.dart';
+import 'package:whatzapp/customUI/message_card.dart';
+import 'package:whatzapp/customUI/reply_card.dart';
+import 'package:whatzapp/model/chat_model.dart';
+import 'package:whatzapp/model/message_model.dart';
+import 'package:whatzapp/widgets/attachment_menu_widget.dart';
+import 'package:whatzapp/widgets/emoji_picker_widget.dart';
 import "package:socket_io_client/socket_io_client.dart" as io;
 
 class IndividualPage extends StatefulWidget {
@@ -63,11 +63,11 @@ class _IndividualPageState extends State<IndividualPage> {
       socket.on("message", (msg) {
         print(msg);
         sentMessage("destination", msg["message"]);
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
       });
     });
     print(socket.connected);
