@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:wazz_up/customUI/custom_card.dart';
 import 'package:wazz_up/model/chat_model.dart';
 import 'package:wazz_up/screens/select_contact_screen.dart';
-import 'package:wazz_up/data/contact_data.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({

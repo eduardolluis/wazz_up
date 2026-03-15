@@ -24,11 +24,11 @@ class IndividualPage extends StatefulWidget {
 class _IndividualPageState extends State<IndividualPage> {
   bool show = false;
   final FocusNode focusNode = FocusNode();
-  late io.Socket socket;
   bool sendButton = false;
   List<MessageModel> messages = [];
-
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  late io.Socket socket;
 
   @override
   void initState() {
@@ -63,6 +63,11 @@ class _IndividualPageState extends State<IndividualPage> {
       socket.on("message", (msg) {
         print(msg);
         sentMessage("destination", msg["message"]);
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
       });
     });
     print(socket.connected);
@@ -79,7 +84,11 @@ class _IndividualPageState extends State<IndividualPage> {
   }
 
   void sentMessage(String type, String message) {
-    MessageModel messageModel = MessageModel(type: type, message: message);
+    MessageModel messageModel = MessageModel(
+      type: type,
+      message: message,
+      time: DateTime.now().toString().substring(10, 16),
+    );
     setState(() {
       setState(() {
         messages.add(messageModel);
@@ -207,15 +216,25 @@ class _IndividualPageState extends State<IndividualPage> {
             child: Stack(
               children: [
                 SizedBox(
-                  height: MediaQuery.of(context).size.height - 140,
+                  height: MediaQuery.of(context).size.height - 150,
                   child: ListView.builder(
                     shrinkWrap: true,
+                    controller: _scrollController,
                     itemCount: messages.length,
                     itemBuilder: (BuildContext context, int index) {
+                      if (index == messages.length - 1) {
+                        return Container(height: 70);
+                      }
                       if (messages[index].type == "source") {
-                        return MessageCard(message: messages[index].message);
+                        return MessageCard(
+                          message: messages[index].message,
+                          time: messages[index].time,
+                        );
                       } else {
-                        return ReplyCard(message: messages[index].message);
+                        return ReplyCard(
+                          message: messages[index].message,
+                          time: messages[index].time,
+                        );
                       }
                     },
                   ),
@@ -319,12 +338,24 @@ class _IndividualPageState extends State<IndividualPage> {
                                 ),
                                 onPressed: () {
                                   if (sendButton) {
+                                    _scrollController.animateTo(
+                                      _scrollController
+                                          .position
+                                          .maxScrollExtent,
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      curve: Curves.easeOut,
+                                    );
                                     sendMessage(
                                       _controller.text,
                                       widget.sourceChat.id,
                                       widget.chatModel.id,
                                     );
                                     _controller.clear();
+                                    setState(() {
+                                      sendButton = false;
+                                    });
                                   }
                                 },
                               ),

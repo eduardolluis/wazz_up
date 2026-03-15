@@ -2,7 +2,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:wazz_up/pages/login_screen_page.dart';
 import 'package:wazz_up/screens/camera_screen.dart';
-import 'package:wazz_up/screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
