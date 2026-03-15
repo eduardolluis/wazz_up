@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:wazz_up/customUI/message_card.dart';
 import 'package:wazz_up/customUI/reply_card.dart';
 import 'package:wazz_up/model/chat_model.dart';
+import 'package:wazz_up/model/message_model.dart';
 import 'package:wazz_up/widgets/attachment_menu_widget.dart';
 import 'package:wazz_up/widgets/emoji_picker_widget.dart';
 import "package:socket_io_client/socket_io_client.dart" as io;
@@ -25,6 +26,7 @@ class _IndividualPageState extends State<IndividualPage> {
   final FocusNode focusNode = FocusNode();
   late io.Socket socket;
   bool sendButton = false;
+  List<MessageModel> messages = [];
 
   final TextEditingController _controller = TextEditingController();
 
@@ -56,16 +58,32 @@ class _IndividualPageState extends State<IndividualPage> {
     socket.connect();
     socket.emit("signin", widget.sourceChat.id);
 
-    socket.onConnect((data) => print("connected"));
+    socket.onConnect((data) {
+      print("connected");
+      socket.on("message", (msg) {
+        print(msg);
+        sentMessage("destination", msg["message"]);
+      });
+    });
     print(socket.connected);
   }
 
   void sendMessage(String message, int sourceId, int targetId) {
+    sentMessage("source", message);
     if (message.trim().isEmpty) return;
     socket.emit("message", {
       "message": message,
       "sourceId": widget.sourceChat.id,
       "targetId": widget.chatModel.id,
+    });
+  }
+
+  void sentMessage(String type, String message) {
+    MessageModel messageModel = MessageModel(type: type, message: message);
+    setState(() {
+      setState(() {
+        messages.add(messageModel);
+      });
     });
   }
 
@@ -190,19 +208,16 @@ class _IndividualPageState extends State<IndividualPage> {
               children: [
                 SizedBox(
                   height: MediaQuery.of(context).size.height - 140,
-                  child: ListView(
+                  child: ListView.builder(
                     shrinkWrap: true,
-                    padding: const EdgeInsets.only(bottom: 80),
-                    children: [
-                      MessageCard(),
-                      ReplyCard(),
-                      MessageCard(),
-                      ReplyCard(),
-                      MessageCard(),
-                      ReplyCard(),
-                      MessageCard(),
-                      ReplyCard(),
-                    ],
+                    itemCount: messages.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      if (messages[index].type == "source") {
+                        return MessageCard(message: messages[index].message);
+                      } else {
+                        return ReplyCard(message: messages[index].message);
+                      }
+                    },
                   ),
                 ),
                 Align(
