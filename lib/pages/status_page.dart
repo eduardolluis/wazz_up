@@ -14,6 +14,7 @@ class _StatusPageState extends State<StatusPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           SizedBox(
             height: 48,
@@ -43,16 +44,22 @@ class _StatusPageState extends State<StatusPage> {
               name: 'Bonilla Garcia  ',
               time: '04:23',
               imageName: '/assets/pfp-1.jpg',
+              isSeen: true,
+              statusNum: 1,
             ),
             OtherStatus(
               name: 'Marcos  Cruz',
               time: '07:23',
               imageName: '/assets/pfp-3.jpg',
+              isSeen: true,
+              statusNum: 2,
             ),
             OtherStatus(
               name: 'De los Santos  ',
               time: '01:00',
               imageName: '/assets/pfp-3.jpg',
+              isSeen: true,
+              statusNum: 3,
             ),
             SizedBox(height: 10),
             label('Viewed updates', context),
@@ -60,11 +67,15 @@ class _StatusPageState extends State<StatusPage> {
               name: 'Bonilla Garcia  ',
               time: '04:23',
               imageName: '/assets/pfp-1.jpg',
+              isSeen: false,
+              statusNum: 4,
             ),
             OtherStatus(
               name: 'Marcos  Cruz',
               time: '07:23',
               imageName: '/assets/pfp-3.jpg',
+              isSeen: false,
+              statusNum: 20,
             ),
           ],
         ),
