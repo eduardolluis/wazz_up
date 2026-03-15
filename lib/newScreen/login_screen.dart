@@ -31,6 +31,65 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.pop(context);
   }
 
+  void showConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          "Confirm your number",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
+          textAlign: TextAlign.center,
+        ),
+        content: RichText(
+          textAlign: TextAlign.center,
+          text: TextSpan(
+            style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+            children: [
+              TextSpan(text: "Is this your number?\n\n"),
+              TextSpan(
+                text: "$countryCode ${phoneCtrl.text.trim()}",
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [  
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text(
+              "Edit",
+              style: TextStyle(color: Colors.grey[600], fontSize: 15),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.greenAccent[700],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text(
+              "Continue",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -51,94 +110,115 @@ class _LoginPageState extends State<LoginPage> {
         centerTitle: true,
         actions: [Icon(Icons.more_vert, color: Colors.black)],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        child: Column(
-          children: [
-            SizedBox(height: 10),
-            Text(
-              "WhatZapp will need to verify your phone number.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13.5, color: Colors.grey[700]),
-            ),
-            SizedBox(height: 5),
-            Text(
-              "What's my number?",
-              style: TextStyle(color: Colors.cyan, fontSize: 12.8),
-            ),
-            SizedBox(height: 20),
-
-            countryCard(context),
-
-            SizedBox(height: 15),
-
-            Row(
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Column(
               children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.teal, width: 1.8),
-                    ),
-                  ),
-                  child: Text(
-                    countryCode,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
+                SizedBox(height: 10),
+                Text(
+                  "WhatZapp will need to verify your phone number.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13.5, color: Colors.grey[700]),
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: phoneCtrl,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      hintText: "Phone number",
-                      hintStyle: TextStyle(color: Colors.grey[400]),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.teal, width: 1.8),
+                SizedBox(height: 5),
+                Text(
+                  "What's my number?",
+                  style: TextStyle(color: Colors.cyan, fontSize: 12.8),
+                ),
+                SizedBox(height: 20),
+                countryCard(context),
+                SizedBox(height: 15),
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 12,
                       ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.teal, width: 2),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.teal, width: 1.8),
+                        ),
+                      ),
+                      child: Text(
+                        countryCode,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: "Phone number",
+                          hintStyle: TextStyle(color: Colors.grey[400]),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.teal,
+                              width: 1.8,
+                            ),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.teal,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
 
-            SizedBox(height: 40),
-
-            SizedBox(
-              width: width / 2.5,
-              height: 42,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.greenAccent[700],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: SizedBox(
+                width: width / 2.5,
+                height: 42,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent[700],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    elevation: 4,
                   ),
-                  elevation: 4,
-                ),
-                onPressed: () {
-                  if (phoneCtrl.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Please enter your phone number")),
-                    );
-                    return;
-                  }
-                },
-                child: Text(
-                  "Next",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  onPressed: () {
+                    if (phoneCtrl.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Please enter your phone number"),
+                        ),
+                      );
+                      return;
+                    }
+                    showConfirmDialog(); 
+                  },
+                  child: Text(
+                    "Next",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
