@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:whatzapp/newScreen/login_screen.dart';
 
 class LandingScreen extends StatelessWidget {
   const LandingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SizedBox(
-        height: MediaQuery.of(context).size.height,
-        width: MediaQuery.of(context).size.width,
+        height: height,
+        width: width,
         child: SafeArea(
           child: Column(
             children: [
@@ -21,14 +26,13 @@ class LandingScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: MediaQuery.of(context).size.height / 8),
+              SizedBox(height: height / 8),
               Image.asset(
                 'assets/bg.png',
                 color: Colors.greenAccent[700],
-                height: 340,
                 width: 340,
               ),
-              SizedBox(height: MediaQuery.of(context).size.height / 9),
+              SizedBox(height: height / 9),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: RichText(
@@ -41,7 +45,7 @@ class LandingScreen extends StatelessWidget {
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       TextSpan(
-                        text: "Whatzapp Terms of Service and Privacy Policy",
+                        text: "WhatZapp Terms of Service and Privacy Policy",
                         style: TextStyle(color: Colors.cyan),
                       ),
                     ],
@@ -50,13 +54,23 @@ class LandingScreen extends StatelessWidget {
               ),
               SizedBox(height: 20),
               InkWell(
-                onTap: () {},
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                    (route) => false,
+                  );
+                },
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width - 110,
+                  width: width - 110,
                   height: 50,
                   child: Card(
                     margin: EdgeInsets.all(0),
                     elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     color: Colors.greenAccent[700],
                     child: Center(
                       child: Text(
