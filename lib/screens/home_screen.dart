@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wazz_up/model/chat_model.dart';
 import 'package:wazz_up/pages/camera_page.dart';
 import 'package:wazz_up/pages/chat_page.dart';
+import 'package:wazz_up/pages/status_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.chatmodels, required this.sourceChat});
@@ -90,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen>
         children: [
           Center(child: CameraPage()),
           Center(child: ChatPage(chatmodels: widget.chatmodels, sourceChat: widget.sourceChat,)),
-          Center(child: Text("Status")),
+          Center(child: StatusPage()),
           Center(child: Text("Calls")),
         ],
       ),
