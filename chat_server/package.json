@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index",
-    "dev": "nodemon index"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
@@ -18,5 +18,8 @@
   },
   "devDependencies": {
     "@types/socket.io": "^3.0.1"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }
