@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:whatzapp/data/contact_data.dart';
 import 'package:whatzapp/model/chat_model.dart';
 import 'package:whatzapp/pages/camera_page.dart';
 import 'package:whatzapp/pages/chat_page.dart';
@@ -18,10 +19,8 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _controller;
 
-  bool get hasChatData =>
-      widget.chatmodels != null &&
-      widget.chatmodels!.isNotEmpty &&
-      widget.sourceChat != null;
+  List<ChatModel> get resolvedChats => widget.chatmodels ?? chatModels;
+  ChatModel get resolvedSource => widget.sourceChat ?? sourceChat;
 
   @override
   void initState() {
@@ -33,19 +32,6 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  Widget _buildChatsTab() {
-    if (hasChatData) {
-      return ChatPage(
-        chatmodels: widget.chatmodels!,
-        sourceChat: widget.sourceChat!,
-      );
-    }
-
-    return const Center(
-      child: Text("No chats available", style: TextStyle(fontSize: 16)),
-    );
   }
 
   @override
@@ -69,27 +55,23 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
-            onSelected: (value) {
-              debugPrint(value);
-            },
-            itemBuilder: (context) {
-              return const [
-                PopupMenuItem(value: "New group", child: Text("New group")),
-                PopupMenuItem(
-                  value: "New broadcast",
-                  child: Text("New broadcast"),
-                ),
-                PopupMenuItem(
-                  value: "Linked devices",
-                  child: Text("Linked devices"),
-                ),
-                PopupMenuItem(
-                  value: "Starred messages",
-                  child: Text("Starred messages"),
-                ),
-                PopupMenuItem(value: "Settings", child: Text("Settings")),
-              ];
-            },
+            onSelected: (value) => debugPrint(value),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: "New group", child: Text("New group")),
+              PopupMenuItem(
+                value: "New broadcast",
+                child: Text("New broadcast"),
+              ),
+              PopupMenuItem(
+                value: "Linked devices",
+                child: Text("Linked devices"),
+              ),
+              PopupMenuItem(
+                value: "Starred messages",
+                child: Text("Starred messages"),
+              ),
+              PopupMenuItem(value: "Settings", child: Text("Settings")),
+            ],
           ),
         ],
         bottom: TabBar(
@@ -108,9 +90,10 @@ class _HomeScreenState extends State<HomeScreen>
       body: TabBarView(
         controller: _controller,
         children: [
-          const Center(child: CameraPage()),
-          Center(child: _buildChatsTab()),
-          const Center(child: StatusPage()),
+          const CameraPage(),
+          // Siempre tiene datos gracias al fallback global
+          ChatPage(chatmodels: resolvedChats, sourceChat: resolvedSource),
+          const StatusPage(),
           const Center(child: Text("Calls")),
         ],
       ),

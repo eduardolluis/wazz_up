@@ -60,7 +60,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       body: Stack(
         children: [
           ListView.builder(
-            itemCount: contacts.length + 1,
+            itemCount: chatModels.length + 1,
             itemBuilder: (BuildContext context, int index) {
               if (index == 0) {
                 return Container(height: groupMember.isNotEmpty ? 90 : 10);
@@ -69,16 +69,16 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
               return InkWell(
                 onTap: () {
                   setState(() {
-                    if (contacts[index - 1].select == true) {
-                      contacts[index - 1].select = false;
-                      groupMember.remove(contacts[index - 1]);
+                    if (chatModels[index - 1].select == true) {
+                      chatModels[index - 1].select = false;
+                      groupMember.remove(chatModels[index - 1]);
                     } else {
-                      contacts[index - 1].select = true;
-                      groupMember.add(contacts[index - 1]);
+                      chatModels[index - 1].select = true;
+                      groupMember.add(chatModels[index - 1]);
                     }
                   });
                 },
-                child: ContactCard(contact: contacts[index - 1]),
+                child: ContactCard(contact: chatModels[index - 1]),
               );
             },
           ),
@@ -90,17 +90,17 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                       color: Colors.white,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: contacts.length,
+                        itemCount: chatModels.length,
                         itemBuilder: (BuildContext context, int index) {
-                          if (contacts[index].select == true) {
+                          if (chatModels[index].select == true) {
                             return InkWell(
                               onTap: () {
                                 setState(() {
-                                  groupMember.remove(contacts[index]);
-                                  contacts[index].select = false;
+                                  groupMember.remove(chatModels[index]);
+                                  chatModels[index].select = false;
                                 });
                               },
-                              child: AvatarCard(contact: contacts[index]),
+                              child: AvatarCard(contact: chatModels[index]),
                             );
                           } else {
                             return Container();

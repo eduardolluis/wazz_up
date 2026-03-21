@@ -42,9 +42,6 @@ class _CameraScreenState extends State<CameraScreen> {
 
     try {
       await cameraValue;
-
-      // Intenta aplicar el flash actual a la nueva cámara.
-      // En algunas cámaras frontales puede no estar soportado.
       await _cameraController.setFlashMode(currentFlashMode);
 
       if (mounted) {
@@ -59,7 +56,6 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       if (!_cameraController.value.isInitialized) return;
 
-      // Alterna entre apagado y torch
       final FlashMode newMode = currentFlashMode == FlashMode.off
           ? FlashMode.torch
           : FlashMode.off;
@@ -86,6 +82,30 @@ class _CameraScreenState extends State<CameraScreen> {
       await _initializeCamera(currentCameraIndex);
     } on CameraException catch (e) {
       debugPrint("Error al cambiar cámara: ${e.description}");
+    }
+  }
+
+  Future<void> takePhoto(BuildContext context) async {
+    try {
+      if (!_cameraController.value.isInitialized) return;
+      if (_cameraController.value.isTakingPicture) return;
+
+      final XFile photo = await _cameraController.takePicture();
+
+      if (!mounted) return;
+
+      final String? imagePath = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (context) => CameraView(path: photo.path)),
+      );
+
+      if (!mounted) return;
+
+      if (imagePath != null && imagePath.isNotEmpty) {
+        Navigator.pop(context, imagePath);
+      }
+    } on CameraException catch (e) {
+      debugPrint("Error al tomar foto: ${e.description}");
     }
   }
 
@@ -125,6 +145,14 @@ class _CameraScreenState extends State<CameraScreen> {
                 return const Center(child: CircularProgressIndicator());
               }
             },
+          ),
+          Positioned(
+            top: 40,
+            left: 10,
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.close, color: Colors.white, size: 30),
+            ),
           ),
           Positioned(
             bottom: 0,
@@ -232,23 +260,5 @@ class _CameraScreenState extends State<CameraScreen> {
         ],
       ),
     );
-  }
-
-  void takePhoto(BuildContext context) async {
-    try {
-      if (!_cameraController.value.isInitialized) return;
-      if (_cameraController.value.isTakingPicture) return;
-
-      final navigator = Navigator.of(context);
-      final XFile photo = await _cameraController.takePicture();
-
-      if (!mounted) return;
-
-      navigator.push(
-        MaterialPageRoute(builder: (context) => CameraView(path: photo.path)),
-      );
-    } on CameraException catch (e) {
-      debugPrint("Error al tomar foto: ${e.description}");
-    }
   }
 }

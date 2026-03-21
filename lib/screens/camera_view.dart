@@ -1,10 +1,27 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 
-class CameraView extends StatelessWidget {
+class CameraView extends StatefulWidget {
   const CameraView({super.key, required this.path});
+
   final String path;
+
+  @override
+  State<CameraView> createState() => _CameraViewState();
+}
+
+class _CameraViewState extends State<CameraView> {
+  final TextEditingController captionController = TextEditingController();
+
+  @override
+  void dispose() {
+    captionController.dispose();
+    super.dispose();
+  }
+
+  void sendImage() {
+    Navigator.pop(context, widget.path);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,16 +33,24 @@ class CameraView extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: Icon(Icons.crop_rotate),
+            icon: const Icon(Icons.crop_rotate),
             iconSize: 27,
           ),
           IconButton(
             onPressed: () {},
-            icon: Icon(Icons.emoji_emotions_outlined),
+            icon: const Icon(Icons.emoji_emotions_outlined),
             iconSize: 27,
           ),
-          IconButton(onPressed: () {}, icon: Icon(Icons.title), iconSize: 27),
-          IconButton(onPressed: () {}, icon: Icon(Icons.edit), iconSize: 27),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.title),
+            iconSize: 27,
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.edit),
+            iconSize: 27,
+          ),
         ],
       ),
       body: SizedBox(
@@ -36,30 +61,44 @@ class CameraView extends StatelessWidget {
             SizedBox(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height - 150,
-              child: Image.file(File(path), fit: BoxFit.cover),
+              child: Image.file(File(widget.path), fit: BoxFit.cover),
             ),
             Positioned(
               bottom: 0,
               child: Container(
                 color: Colors.black,
                 width: MediaQuery.of(context).size.width,
-                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 child: TextFormField(
-                  style: TextStyle(color: Colors.white, fontSize: 17),
+                  controller: captionController,
+                  style: const TextStyle(color: Colors.white, fontSize: 17),
                   minLines: 1,
                   maxLines: 6,
                   decoration: InputDecoration(
                     hintText: "Add caption...",
-                    prefixIcon: Icon(
+                    prefixIcon: const Icon(
                       Icons.add_photo_alternate,
                       color: Colors.white,
                       size: 27,
                     ),
-                    hintStyle: TextStyle(color: Colors.white, fontSize: 17),
-                    suffixIcon: CircleAvatar(
-                      radius: 27,
-                      backgroundColor: Colors.tealAccent[700],
-                      child: Icon(Icons.check, color: Colors.white, size: 27),
+                    hintStyle: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                    ),
+                    suffixIcon: GestureDetector(
+                      onTap: sendImage,
+                      child: CircleAvatar(
+                        radius: 27,
+                        backgroundColor: Colors.tealAccent[700],
+                        child: const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 27,
+                        ),
+                      ),
                     ),
                     border: InputBorder.none,
                   ),

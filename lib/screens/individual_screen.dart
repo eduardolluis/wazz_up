@@ -4,6 +4,7 @@ import 'package:whatzapp/customUI/message_card.dart';
 import 'package:whatzapp/customUI/reply_card.dart';
 import 'package:whatzapp/model/chat_model.dart';
 import 'package:whatzapp/model/message_model.dart';
+import 'package:whatzapp/screens/camera_screen.dart';
 import 'package:whatzapp/widgets/attachment_menu_widget.dart';
 import 'package:whatzapp/widgets/emoji_picker_widget.dart';
 import "package:socket_io_client/socket_io_client.dart" as io;
@@ -14,6 +15,7 @@ class IndividualPage extends StatefulWidget {
     required this.chatModel,
     required this.sourceChat,
   });
+
   final ChatModel chatModel;
   final ChatModel sourceChat;
 
@@ -34,6 +36,7 @@ class _IndividualPageState extends State<IndividualPage> {
   void initState() {
     super.initState();
     connect();
+
     focusNode.addListener(() {
       if (focusNode.hasFocus) {
         setState(() {
@@ -47,6 +50,10 @@ class _IndividualPageState extends State<IndividualPage> {
   void dispose() {
     focusNode.dispose();
     _controller.dispose();
+    _scrollController.dispose();
+
+    socket.dispose();
+
     super.dispose();
   }
 
@@ -55,45 +62,86 @@ class _IndividualPageState extends State<IndividualPage> {
       "transports": ["websocket"],
       "autoConnect": false,
     });
-    socket.connect();
-    socket.emit("signin", widget.sourceChat.id);
 
-    socket.onConnect((data) {
-      print("connected");
-      socket.on("message", (msg) {
-        print(msg);
-        sentMessage("destination", msg["message"]);
+    socket.onConnect((_) {
+      debugPrint("connected");
+      socket.emit("signin", widget.sourceChat.id);
+    });
+
+    socket.on("message", (msg) {
+      sentMessage("destination", msg["message"]);
+      scrollToBottom();
+    });
+
+    socket.on("image_message", (msg) {
+      sentMessage("destination", msg["image"]);
+      scrollToBottom();
+    });
+
+    socket.connect();
+  }
+
+  void scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
-      });
+      }
     });
-    print(socket.connected);
   }
 
   void sendMessage(String message, int sourceId, int targetId) {
-    sentMessage("source", message);
     if (message.trim().isEmpty) return;
+
+    sentMessage("source", message);
+
     socket.emit("message", {
       "message": message,
+      "sourceId": sourceId,
+      "targetId": targetId,
+    });
+
+    scrollToBottom();
+  }
+
+  void sendImageMessage(String imagePath) {
+    if (imagePath.trim().isEmpty) return;
+
+    sentMessage("source", imagePath);
+
+    socket.emit("image_message", {
+      "image": imagePath,
       "sourceId": widget.sourceChat.id,
       "targetId": widget.chatModel.id,
     });
+
+    scrollToBottom();
   }
 
   void sentMessage(String type, String message) {
-    MessageModel messageModel = MessageModel(
+    final MessageModel messageModel = MessageModel(
       type: type,
       message: message,
       time: DateTime.now().toString().substring(10, 16),
     );
+
     setState(() {
-      setState(() {
-        messages.add(messageModel);
-      });
+      messages.add(messageModel);
     });
+  }
+
+  Future<void> openCamera() async {
+    final String? imagePath = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const CameraScreen()),
+    );
+
+    if (imagePath != null && imagePath.isNotEmpty) {
+      sendImageMessage(imagePath);
+    }
   }
 
   @override
@@ -220,11 +268,9 @@ class _IndividualPageState extends State<IndividualPage> {
                   child: ListView.builder(
                     shrinkWrap: true,
                     controller: _scrollController,
+                    padding: const EdgeInsets.only(bottom: 70, top: 8),
                     itemCount: messages.length,
                     itemBuilder: (BuildContext context, int index) {
-                      if (index == messages.length - 1) {
-                        return Container(height: 70);
-                      }
                       if (messages[index].type == "source") {
                         return MessageCard(
                           message: messages[index].message,
@@ -265,15 +311,9 @@ class _IndividualPageState extends State<IndividualPage> {
                                 maxLines: 5,
                                 minLines: 1,
                                 onChanged: (value) {
-                                  if (value.isNotEmpty) {
-                                    setState(() {
-                                      sendButton = true;
-                                    });
-                                  } else {
-                                    setState(() {
-                                      sendButton = false;
-                                    });
-                                  }
+                                  setState(() {
+                                    sendButton = value.isNotEmpty;
+                                  });
                                 },
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
@@ -305,13 +345,13 @@ class _IndividualPageState extends State<IndividualPage> {
                                           showModalBottomSheet(
                                             context: context,
                                             builder: (builder) =>
-                                                AttachmentMenu(),
+                                                const AttachmentMenu(),
                                           );
                                         },
                                         icon: const Icon(Icons.attach_file),
                                       ),
                                       IconButton(
-                                        onPressed: () {},
+                                        onPressed: openCamera,
                                         icon: const Icon(
                                           Icons.camera_alt_rounded,
                                         ),
@@ -338,21 +378,13 @@ class _IndividualPageState extends State<IndividualPage> {
                                 ),
                                 onPressed: () {
                                   if (sendButton) {
-                                    _scrollController.animateTo(
-                                      _scrollController
-                                          .position
-                                          .maxScrollExtent,
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      curve: Curves.easeOut,
-                                    );
                                     sendMessage(
                                       _controller.text,
                                       widget.sourceChat.id,
                                       widget.chatModel.id,
                                     );
                                     _controller.clear();
+
                                     setState(() {
                                       sendButton = false;
                                     });

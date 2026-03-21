@@ -53,7 +53,7 @@ class _SelectContactPageState extends State<SelectContactPage> {
         ],
       ),
       body: ListView.builder(
-        itemCount: contacts.length + 2,
+        itemCount: chatModels.length + 2,
         itemBuilder: (BuildContext context, index) {
           if (index == 0) {
             return InkWell(
@@ -68,7 +68,7 @@ class _SelectContactPageState extends State<SelectContactPage> {
           } else if (index == 1) {
             return ButtonCard(icon: Icons.person_add, name: "New Contact");
           } else {
-            return ContactCard(contact: contacts[index - 2]);
+            return ContactCard(contact: chatModels[index - 2]);
           }
         },
       ),

@@ -1,6 +1,17 @@
 import 'package:whatzapp/model/chat_model.dart';
 
-List<ChatModel> contacts = [
+ChatModel sourceChat = ChatModel(
+  name: 'Yo',
+  icon: 'person.svg',
+  isGroup: false,
+  time: '',
+  currentMessage: '',
+  status: 'Hey there!',
+  select: false,
+  id: 0,
+);
+
+List<ChatModel> chatModels = [
   ChatModel(
     name: 'Eduardo',
     icon: 'person.svg',
@@ -17,27 +28,27 @@ List<ChatModel> contacts = [
     isGroup: false,
     time: '18:04',
     currentMessage: 'hellouuu there',
-    status: ' x  developer',
+    status: 'X developer',
     select: false,
     id: 2,
   ),
   ChatModel(
-    name: 'dadada',
+    name: 'Dadada',
     icon: 'person.svg',
     isGroup: false,
     time: '18:04',
     currentMessage: 'hellouuu there',
-    status: ' junior  ',
+    status: 'Junior dev',
     select: false,
     id: 3,
   ),
   ChatModel(
-    name: 'malcom',
+    name: 'Malcom',
     icon: 'person.svg',
     isGroup: false,
     time: '18:04',
-    currentMessage: 'klk cabeza ',
-    status: 'fronted  ',
+    currentMessage: 'klk cabeza',
+    status: 'Frontend dev',
     select: false,
     id: 4,
   ),

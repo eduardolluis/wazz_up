@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:whatzapp/screens/camera_screen.dart';
 
 class AttachmentMenu extends StatelessWidget {
   const AttachmentMenu({super.key});
@@ -17,8 +18,8 @@ class AttachmentMenu extends StatelessWidget {
         mainAxisSpacing: 20,
         crossAxisSpacing: 20,
         physics: const NeverScrollableScrollPhysics(),
-        children: const [
-          AttachmentItem(
+        children: [
+          const AttachmentItem(
             icon: Icons.insert_drive_file,
             color: Colors.indigo,
             label: 'Document',
@@ -27,23 +28,30 @@ class AttachmentMenu extends StatelessWidget {
             icon: Icons.camera_alt,
             color: Colors.pink,
             label: 'Camera',
+            onTap: () {
+              Navigator.pop(context); // cierra el bottom sheet
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CameraScreen()),
+              );
+            },
           ),
-          AttachmentItem(
+          const AttachmentItem(
             icon: Icons.image,
             color: Colors.purple,
             label: 'Gallery',
           ),
-          AttachmentItem(
+          const AttachmentItem(
             icon: Icons.headphones,
             color: Colors.orange,
             label: 'Audio',
           ),
-          AttachmentItem(
+          const AttachmentItem(
             icon: Icons.location_on,
             color: Colors.teal,
             label: 'Location',
           ),
-          AttachmentItem(
+          const AttachmentItem(
             icon: Icons.person,
             color: Colors.blue,
             label: 'Contact',
@@ -58,27 +66,32 @@ class AttachmentItem extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String label;
+  final VoidCallback? onTap;
 
   const AttachmentItem({
     super.key,
     required this.icon,
     required this.color,
     required this.label,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        CircleAvatar(
-          radius: 28,
-          backgroundColor: color,
-          child: Icon(icon, color: Colors.white, size: 28),
-        ),
-        const SizedBox(height: 8),
-        Text(label, style: const TextStyle(fontSize: 13)),
-      ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 28,
+            backgroundColor: color,
+            child: Icon(icon, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 13)),
+        ],
+      ),
     );
   }
 }
