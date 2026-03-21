@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:whatzapp/model/country_model.dart';
 import 'package:whatzapp/newScreen/country_screen.dart';
+import 'package:whatzapp/newScreen/otp_screen.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +18,8 @@ class _LoginPageState extends State<LoginPage> {
   String countryFlag = "🇩🇴";
 
   final TextEditingController phoneCtrl = TextEditingController();
+
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -31,12 +36,77 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.pop(context);
   }
 
+  Future<void> sendOtp() async {
+    final phoneNumber = phoneCtrl.text.trim();
+
+    if (phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter your phone number")),
+      );
+      return;
+    }
+
+    final fullNumber = "$countryCode$phoneNumber";
+
+    setState(() {
+      isLoading = true;
+    });
+
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: fullNumber,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        try {
+          await FirebaseAuth.instance.signInWithCredential(credential);
+        } catch (_) {}
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? "Verification failed"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+        });
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpScreen(
+              number: phoneNumber,
+              countryCode: countryCode,
+              verificationId: verificationId,
+            ),
+          ),
+        );
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+        });
+      },
+      timeout: const Duration(seconds: 60),
+    );
+  }
+
   void showConfirmDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Text(
+        title: const Text(
           "Confirm your number",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal),
           textAlign: TextAlign.center,
@@ -46,10 +116,10 @@ class _LoginPageState extends State<LoginPage> {
           text: TextSpan(
             style: TextStyle(fontSize: 15, color: Colors.grey[700]),
             children: [
-              TextSpan(text: "Is this your number?\n\n"),
+              const TextSpan(text: "Is this your number?\n\n"),
               TextSpan(
                 text: "$countryCode ${phoneCtrl.text.trim()}",
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
@@ -59,9 +129,9 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: [  
+        actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), 
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(
               "Edit",
               style: TextStyle(color: Colors.grey[600], fontSize: 15),
@@ -74,10 +144,11 @@ class _LoginPageState extends State<LoginPage> {
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await sendOtp();
             },
-            child: Text(
+            child: const Text(
               "Continue",
               style: TextStyle(
                 color: Colors.white,
@@ -99,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: const Text(
           "Enter your phone number",
           style: TextStyle(
             color: Colors.teal,
@@ -108,7 +179,12 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         centerTitle: true,
-        actions: [Icon(Icons.more_vert, color: Colors.black)],
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: Icon(Icons.more_vert, color: Colors.black),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -116,55 +192,58 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Column(
               children: [
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Text(
                   "WhatZapp will need to verify your phone number.",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13.5, color: Colors.grey[700]),
                 ),
-                SizedBox(height: 5),
-                Text(
+                const SizedBox(height: 5),
+                const Text(
                   "What's my number?",
                   style: TextStyle(color: Colors.cyan, fontSize: 12.8),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 countryCard(context),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 12,
                       ),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         border: Border(
                           bottom: BorderSide(color: Colors.teal, width: 1.8),
                         ),
                       ),
                       child: Text(
                         countryCode,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: phoneCtrl,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                         decoration: InputDecoration(
                           hintText: "Phone number",
                           hintStyle: TextStyle(color: Colors.grey[400]),
-                          enabledBorder: UnderlineInputBorder(
+                          enabledBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(
                               color: Colors.teal,
                               width: 1.8,
                             ),
                           ),
-                          focusedBorder: UnderlineInputBorder(
+                          focusedBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(
                               color: Colors.teal,
                               width: 2,
@@ -178,7 +257,6 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
-
           Positioned(
             bottom: 30,
             left: 0,
@@ -195,25 +273,36 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     elevation: 4,
                   ),
-                  onPressed: () {
-                    if (phoneCtrl.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Please enter your phone number"),
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          if (phoneCtrl.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Please enter your phone number"),
+                              ),
+                            );
+                            return;
+                          }
+                          showConfirmDialog();
+                        },
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.3,
+                          ),
+                        )
+                      : const Text(
+                          "Next",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      );
-                      return;
-                    }
-                    showConfirmDialog(); 
-                  },
-                  child: Text(
-                    "Next",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ),
               ),
             ),
@@ -235,18 +324,21 @@ class _LoginPageState extends State<LoginPage> {
       },
       child: Container(
         width: MediaQuery.of(context).size.width / 1.5,
-        padding: EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: const BoxDecoration(
           border: Border(bottom: BorderSide(color: Colors.teal, width: 1.8)),
         ),
         child: Row(
           children: [
-            Text(countryFlag, style: TextStyle(fontSize: 18)),
-            SizedBox(width: 8),
+            Text(countryFlag, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 countryName,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

@@ -1,11 +1,15 @@
 import 'package:camera/camera.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:whatzapp/firebase_options.dart';
 import 'package:whatzapp/newScreen/landing_screen.dart';
-import 'package:whatzapp/pages/login_screen_page.dart';
 import 'package:whatzapp/screens/camera_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   cameras = await availableCameras();
   runApp(const MyApp());
 }

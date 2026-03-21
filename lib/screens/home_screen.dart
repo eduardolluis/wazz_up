@@ -5,13 +5,10 @@ import 'package:whatzapp/pages/chat_page.dart';
 import 'package:whatzapp/pages/status_page.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({
-    super.key,
-    required this.chatmodels,
-    required this.sourceChat,
-  });
-  final List<ChatModel> chatmodels;
-  final ChatModel sourceChat;
+  const HomeScreen({super.key, this.chatmodels, this.sourceChat});
+
+  final List<ChatModel>? chatmodels;
+  final ChatModel? sourceChat;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -20,6 +17,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _controller;
+
+  bool get hasChatData =>
+      widget.chatmodels != null &&
+      widget.chatmodels!.isNotEmpty &&
+      widget.sourceChat != null;
 
   @override
   void initState() {
@@ -31,6 +33,19 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Widget _buildChatsTab() {
+    if (hasChatData) {
+      return ChatPage(
+        chatmodels: widget.chatmodels!,
+        sourceChat: widget.sourceChat!,
+      );
+    }
+
+    return const Center(
+      child: Text("No chats available", style: TextStyle(fontSize: 16)),
+    );
   }
 
   @override
@@ -55,10 +70,10 @@ class _HomeScreenState extends State<HomeScreen>
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
             onSelected: (value) {
-              print(value);
+              debugPrint(value);
             },
             itemBuilder: (context) {
-              return [
+              return const [
                 PopupMenuItem(value: "New group", child: Text("New group")),
                 PopupMenuItem(
                   value: "New broadcast",
@@ -93,15 +108,10 @@ class _HomeScreenState extends State<HomeScreen>
       body: TabBarView(
         controller: _controller,
         children: [
-          Center(child: CameraPage()),
-          Center(
-            child: ChatPage(
-              chatmodels: widget.chatmodels,
-              sourceChat: widget.sourceChat,
-            ),
-          ),
-          Center(child: StatusPage()),
-          Center(child: Text("Calls")),
+          const Center(child: CameraPage()),
+          Center(child: _buildChatsTab()),
+          const Center(child: StatusPage()),
+          const Center(child: Text("Calls")),
         ],
       ),
     );

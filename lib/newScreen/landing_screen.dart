@@ -17,8 +17,8 @@ class LandingScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              SizedBox(height: 50),
-              Text(
+              const SizedBox(height: 50),
+              const Text(
                 "Welcome to WhatZapp",
                 style: TextStyle(
                   color: Colors.teal,
@@ -38,13 +38,13 @@ class LandingScreen extends StatelessWidget {
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
-                    style: TextStyle(color: Colors.black, fontSize: 15),
+                    style: const TextStyle(color: Colors.black, fontSize: 15),
                     children: [
                       TextSpan(
                         text: "Agree and Continue to accept the ",
                         style: TextStyle(color: Colors.grey[700]),
                       ),
-                      TextSpan(
+                      const TextSpan(
                         text: "WhatZapp Terms of Service and Privacy Policy",
                         style: TextStyle(color: Colors.cyan),
                       ),
@@ -52,13 +52,13 @@ class LandingScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                     (route) => false,
                   );
                 },
@@ -66,13 +66,13 @@ class LandingScreen extends StatelessWidget {
                   width: width - 110,
                   height: 50,
                   child: Card(
-                    margin: EdgeInsets.all(0),
+                    margin: EdgeInsets.zero,
                     elevation: 8,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     color: Colors.greenAccent[700],
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         "Agree and Continue",
                         style: TextStyle(
