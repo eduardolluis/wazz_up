@@ -6,11 +6,13 @@ import 'package:flutter_svg/svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:url_launcher/url_launcher.dart';
 import 'package:whatzapp/customUI/message_card.dart';
 import 'package:whatzapp/customUI/reply_card.dart';
 import 'package:whatzapp/model/chat_model.dart';
 import 'package:whatzapp/model/message_model.dart';
 import 'package:whatzapp/screens/camera_screen.dart';
+import 'package:whatzapp/screens/view_contact_screen.dart';
 import 'package:whatzapp/widgets/attachment_menu_widget.dart';
 import 'package:whatzapp/widgets/emoji_picker_widget.dart';
 
@@ -48,6 +50,11 @@ class _IndividualPageState extends State<IndividualPage> {
   String? _currentAudioPath;
   double _dragDx = 0;
 
+  // search within chat
+  bool _searchMode = false;
+  String _searchQuery = '';
+  final _searchCtrl = TextEditingController();
+
   static const double _cancelThreshold = -120;
 
   int get sourceId => widget.sourceChat.id;
@@ -71,6 +78,7 @@ class _IndividualPageState extends State<IndividualPage> {
     focusNode.dispose();
     _controller.dispose();
     _scrollController.dispose();
+    _searchCtrl.dispose();
     _audioRecorder.dispose();
     socket.disconnect();
     socket.dispose();
@@ -199,6 +207,30 @@ class _IndividualPageState extends State<IndividualPage> {
     );
   }
 
+  // ────────────────────────────── calls ──────────────────────────────
+  Future<void> _launchVoiceCall() async {
+    final uri = Uri.parse('tel:+18090000000');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (!mounted) return;
+      _showSimulatedCallScreen(isVideo: false);
+    }
+  }
+
+  void _showSimulatedCallScreen({required bool isVideo}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _SimulatedCallScreen(
+          name: widget.chatModel.name,
+          isVideo: isVideo,
+        ),
+      ),
+    );
+  }
+
+  // ────────────────────────────── recording ──────────────────────────────
   void _startRecordingTimer() {
     _recordingTimer?.cancel();
     recordingSeconds = 0;
@@ -224,7 +256,6 @@ class _IndividualPageState extends State<IndividualPage> {
 
   Future<void> startAudioRecording() async {
     if (isRecordingAudio) return;
-
     try {
       final hasPermission = await _audioRecorder.hasPermission();
       if (!hasPermission) {
@@ -241,7 +272,6 @@ class _IndividualPageState extends State<IndividualPage> {
       final dir = await getTemporaryDirectory();
       final path =
           '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-
       _currentAudioPath = path;
 
       await _audioRecorder.start(
@@ -254,7 +284,6 @@ class _IndividualPageState extends State<IndividualPage> {
       );
 
       _startRecordingTimer();
-
       if (!mounted) return;
       setState(() {
         isRecordingAudio = true;
@@ -273,17 +302,14 @@ class _IndividualPageState extends State<IndividualPage> {
     } catch (e) {
       debugPrint("Error cancelando audio: $e");
     }
-
     if (!mounted) return;
     _resetRecordingState();
   }
 
   Future<void> stopAudioRecording() async {
     if (!isRecordingAudio) return;
-
     final durationSeconds = recordingSeconds;
     final durationLabel = _formatSeconds(durationSeconds);
-
     _stopRecordingTimer();
 
     String? recordedPath;
@@ -297,24 +323,18 @@ class _IndividualPageState extends State<IndividualPage> {
     _resetRecordingState();
 
     final finalPath = recordedPath ?? _currentAudioPath;
-    if (finalPath == null || finalPath.isEmpty || durationSeconds < 0) return;
-
+    if (finalPath == null || finalPath.isEmpty) return;
     final file = File(finalPath);
     if (await file.exists()) {
-      sendAudioMessage(
-        finalPath,
-        durationSeconds: durationSeconds,
-        durationLabel: durationLabel,
-      );
+      sendAudioMessage(finalPath,
+          durationSeconds: durationSeconds, durationLabel: durationLabel);
     }
   }
 
   void handleRecordingDrag(LongPressMoveUpdateDetails details) {
     if (!isRecordingAudio) return;
-
     final dx = details.offsetFromOrigin.dx;
     if (!mounted) return;
-
     setState(() {
       _dragDx = dx;
       isCancellingAudio = dx <= _cancelThreshold;
@@ -326,7 +346,6 @@ class _IndividualPageState extends State<IndividualPage> {
       context,
       MaterialPageRoute(builder: (_) => const CameraScreen()),
     );
-
     if (imagePath != null && imagePath.isNotEmpty) {
       sendImageMessage(imagePath);
     }
@@ -344,6 +363,15 @@ class _IndividualPageState extends State<IndividualPage> {
     });
   }
 
+  List<MessageModel> get _filteredMessages {
+    if (_searchQuery.isEmpty) return messages;
+    return messages
+        .where(
+            (m) => m.message.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+  }
+
+  // ────────────────────────────── build ──────────────────────────────
   Widget _buildMessageBubble(MessageModel msg) {
     return msg.type == "source"
         ? MessageCard(message: msg.message, time: msg.time)
@@ -394,9 +422,7 @@ class _IndividualPageState extends State<IndividualPage> {
                 Text(
                   _formatSeconds(recordingSeconds),
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
+                      color: Colors.white, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -438,7 +464,15 @@ class _IndividualPageState extends State<IndividualPage> {
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,
-                        builder: (_) => const AttachmentMenu(),
+                        builder: (_) => AttachmentMenu(
+                          onAttachment: (path, type) {
+                            if (type == 'image') {
+                              sendImageMessage(path);
+                            } else {
+                              sendMessage(path);
+                            }
+                          },
+                        ),
                       );
                     },
                     icon: const Icon(Icons.attach_file),
@@ -499,9 +533,187 @@ class _IndividualPageState extends State<IndividualPage> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar(ColorScheme cs) {
+    if (_searchMode) {
+      return PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: AppBar(
+          backgroundColor: cs.primary,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              setState(() {
+                _searchMode = false;
+                _searchQuery = '';
+                _searchCtrl.clear();
+              });
+            },
+          ),
+          title: TextField(
+            controller: _searchCtrl,
+            autofocus: true,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              hintText: 'Buscar en el chat...',
+              hintStyle: TextStyle(color: Colors.white70),
+              border: InputBorder.none,
+            ),
+            onChanged: (v) => setState(() => _searchQuery = v),
+          ),
+          actions: [
+            if (_searchCtrl.text.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  _searchCtrl.clear();
+                  setState(() => _searchQuery = '');
+                },
+              ),
+          ],
+        ),
+      );
+    }
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: AppBar(
+        backgroundColor: cs.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leadingWidth: 70,
+        titleSpacing: 0,
+        leading: InkWell(
+          onTap: () => Navigator.pop(context),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.arrow_back, size: 24),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.blueGrey,
+                child: SvgPicture.asset(
+                  widget.chatModel.isGroup
+                      ? "assets/groups.svg"
+                      : "assets/person.svg",
+                  colorFilter: const ColorFilter.mode(
+                    Colors.white,
+                    BlendMode.srcIn,
+                  ),
+                  height: 36,
+                  width: 36,
+                ),
+              ),
+            ],
+          ),
+        ),
+        title: GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ViewContactPage(contact: widget.chatModel),
+              ),
+            );
+          },
+          child: Container(
+            margin: const EdgeInsets.all(6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.chatModel.name,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  "last seen at ${widget.chatModel.time}",
+                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () => _showSimulatedCallScreen(isVideo: true),
+            icon: const Icon(Icons.videocam),
+          ),
+          IconButton(
+            onPressed: _launchVoiceCall,
+            icon: const Icon(Icons.call),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              switch (value) {
+                case 'View Contact':
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ViewContactPage(contact: widget.chatModel),
+                    ),
+                  );
+                  break;
+                case 'Search':
+                  setState(() => _searchMode = true);
+                  break;
+                case 'Mute':
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Notificaciones silenciadas')),
+                  );
+                  break;
+                case 'Clear chat':
+                  _confirmClearChat();
+                  break;
+                default:
+                  debugPrint(value);
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: "View Contact", child: Text("View Contact")),
+              PopupMenuItem(
+                  value: "Media", child: Text("Media, links and docs")),
+              PopupMenuItem(value: "Search", child: Text("Search")),
+              PopupMenuItem(value: "Mute", child: Text("Mute Notifications")),
+              PopupMenuItem(value: "Clear chat", child: Text("Clear chat")),
+              PopupMenuItem(value: "Wallpaper", child: Text("Wallpaper")),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmClearChat() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Borrar chat'),
+        content:
+            const Text('¿Estás seguro que deseas borrar todos los mensajes?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() => messages.clear());
+            },
+            child: const Text('Borrar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final displayMessages = _filteredMessages;
 
     return Stack(
       children: [
@@ -510,87 +722,7 @@ class _IndividualPageState extends State<IndividualPage> {
         ),
         Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(60),
-            child: AppBar(
-              backgroundColor: cs.primary,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              leadingWidth: 70,
-              titleSpacing: 0,
-              leading: InkWell(
-                onTap: () => Navigator.pop(context),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.arrow_back, size: 24),
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.blueGrey,
-                      child: SvgPicture.asset(
-                        widget.chatModel.isGroup
-                            ? "assets/groups.svg"
-                            : "assets/person.svg",
-                        colorFilter: const ColorFilter.mode(
-                          Colors.white,
-                          BlendMode.srcIn,
-                        ),
-                        height: 36,
-                        width: 36,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              title: Container(
-                margin: const EdgeInsets.all(6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.chatModel.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      "last seen at ${widget.chatModel.time}",
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                IconButton(onPressed: () {}, icon: const Icon(Icons.videocam)),
-                IconButton(onPressed: () {}, icon: const Icon(Icons.call)),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  onSelected: debugPrint,
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: "New group", child: Text("New group")),
-                    PopupMenuItem(
-                      value: "View Contact",
-                      child: Text("View Contact"),
-                    ),
-                    PopupMenuItem(
-                      value: "Media",
-                      child: Text("Media, links and docs"),
-                    ),
-                    PopupMenuItem(value: "Search", child: Text("Search")),
-                    PopupMenuItem(
-                      value: "Mute",
-                      child: Text("Mute Notifications"),
-                    ),
-                    PopupMenuItem(value: "Wallpaper", child: Text("Wallpaper")),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          appBar: _buildAppBar(cs),
           body: PopScope(
             canPop: !show,
             onPopInvokedWithResult: (didPop, result) {
@@ -598,31 +730,188 @@ class _IndividualPageState extends State<IndividualPage> {
             },
             child: Column(
               children: [
+                if (_searchMode && _searchQuery.isNotEmpty)
+                  Container(
+                    color: cs.primary.withOpacity(0.1),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Text(
+                      '${displayMessages.length} resultado(s)',
+                      style: TextStyle(color: cs.secondary, fontSize: 13),
+                    ),
+                  ),
                 Expanded(
                   child: ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.only(bottom: 12, top: 8),
-                    itemCount: messages.length,
+                    itemCount: displayMessages.length,
                     itemBuilder: (_, index) =>
-                        _buildMessageBubble(messages[index]),
+                        _buildMessageBubble(displayMessages[index]),
                   ),
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    isRecordingAudio
-                        ? _buildRecordingInput()
-                        : _buildTextInput(),
-                    _buildActionButton(cs),
-                  ],
-                ),
-                if (show && !isRecordingAudio)
+                if (!_searchMode)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      isRecordingAudio
+                          ? _buildRecordingInput()
+                          : _buildTextInput(),
+                      _buildActionButton(cs),
+                    ],
+                  ),
+                if (show && !isRecordingAudio && !_searchMode)
                   EmojiSelect(controller: _controller),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+// ────────────────────────────── Simulated call ──────────────────────────────
+class _SimulatedCallScreen extends StatefulWidget {
+  final String name;
+  final bool isVideo;
+  const _SimulatedCallScreen({required this.name, required this.isVideo});
+
+  @override
+  State<_SimulatedCallScreen> createState() => _SimulatedCallScreenState();
+}
+
+class _SimulatedCallScreenState extends State<_SimulatedCallScreen> {
+  bool _muted = false;
+  bool _speakerOn = false;
+  bool _cameraOff = false;
+  int _seconds = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _seconds++);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _fmt(int s) {
+    final m = (s ~/ 60).toString().padLeft(2, '0');
+    final sec = (s % 60).toString().padLeft(2, '0');
+    return '$m:$sec';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1A1A2E),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.blueGrey,
+              child: Text(
+                widget.name[0].toUpperCase(),
+                style: const TextStyle(
+                    fontSize: 40,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(widget.name,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(
+              _seconds == 0
+                  ? (widget.isVideo ? 'Videollamada...' : 'Llamando...')
+                  : _fmt(_seconds),
+              style: const TextStyle(color: Colors.white70, fontSize: 16),
+            ),
+            const Spacer(),
+            if (widget.isVideo)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _Btn(
+                      icon: _cameraOff ? Icons.videocam_off : Icons.videocam,
+                      label: 'Cámara',
+                      onTap: () => setState(() => _cameraOff = !_cameraOff),
+                    ),
+                    _Btn(
+                      icon: Icons.flip_camera_ios,
+                      label: 'Voltear',
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _Btn(
+                  icon: _muted ? Icons.mic_off : Icons.mic,
+                  label: _muted ? 'Activar' : 'Silenciar',
+                  onTap: () => setState(() => _muted = !_muted),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.red,
+                    child: Icon(Icons.call_end, color: Colors.white, size: 32),
+                  ),
+                ),
+                _Btn(
+                  icon: _speakerOn ? Icons.volume_up : Icons.volume_down,
+                  label: 'Altavoz',
+                  onTap: () => setState(() => _speakerOn = !_speakerOn),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Btn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _Btn({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: Colors.white24,
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(height: 6),
+          Text(label,
+              style: const TextStyle(color: Colors.white70, fontSize: 11)),
+        ],
+      ),
     );
   }
 }
