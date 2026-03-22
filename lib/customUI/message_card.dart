@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:whatzapp/customUI/audio_message_bubble.dart';
 import 'package:whatzapp/customUI/full_screen_image.dart';
 
 class MessageCard extends StatelessWidget {
@@ -20,9 +21,42 @@ class MessageCard extends StatelessWidget {
         lower.endsWith('.webp');
   }
 
+  bool get isAudioMessage {
+    final lower = message.toLowerCase();
+    return message.contains('🎤') ||
+        lower.endsWith('.m4a') ||
+        lower.endsWith('.mp3') ||
+        lower.endsWith('.aac') ||
+        lower.endsWith('.wav');
+  }
+
   @override
   Widget build(BuildContext context) {
     final heroTag = "msg_$message$time";
+
+    if (isAudioMessage) {
+      return Align(
+        alignment: Alignment.centerRight,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          child: Card(
+            elevation: 1,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            color: const Color(0xFFDCF8C6),
+            margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+            child: AudioMessageBubble(
+              message: message,
+              time: time,
+              isMine: true,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Align(
       alignment: Alignment.centerRight,

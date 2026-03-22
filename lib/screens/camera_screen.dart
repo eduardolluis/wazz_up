@@ -56,9 +56,8 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       if (!_cameraController.value.isInitialized) return;
 
-      final FlashMode newMode = currentFlashMode == FlashMode.off
-          ? FlashMode.torch
-          : FlashMode.off;
+      final FlashMode newMode =
+          currentFlashMode == FlashMode.off ? FlashMode.torch : FlashMode.off;
 
       await _cameraController.setFlashMode(newMode);
 
@@ -202,8 +201,8 @@ class _CameraScreenState extends State<CameraScreen> {
                               return;
                             }
 
-                            final XFile video = await _cameraController
-                                .stopVideoRecording();
+                            final XFile video =
+                                await _cameraController.stopVideoRecording();
 
                             if (!mounted) return;
 
