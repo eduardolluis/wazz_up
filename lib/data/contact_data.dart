@@ -7,8 +7,8 @@ ChatModel sourceChat = ChatModel(
   time: '',
   currentMessage: '',
   status: 'Hey there!',
-  select: false,
   id: 0,
+  uid: 'my_uid',
 );
 
 List<ChatModel> chatModels = [
@@ -19,8 +19,8 @@ List<ChatModel> chatModels = [
     time: '18:04',
     currentMessage: 'Hi there',
     status: 'A full stack developer',
-    select: false,
     id: 1,
+    uid: 'uid_1',
   ),
   ChatModel(
     name: 'Marcos',
@@ -29,8 +29,8 @@ List<ChatModel> chatModels = [
     time: '18:04',
     currentMessage: 'hellouuu there',
     status: 'X developer',
-    select: false,
     id: 2,
+    uid: 'uid_2',
   ),
   ChatModel(
     name: 'Dadada',
@@ -39,8 +39,8 @@ List<ChatModel> chatModels = [
     time: '18:04',
     currentMessage: 'hellouuu there',
     status: 'Junior dev',
-    select: false,
     id: 3,
+    uid: 'uid_3',
   ),
   ChatModel(
     name: 'Malcom',
@@ -49,7 +49,7 @@ List<ChatModel> chatModels = [
     time: '18:04',
     currentMessage: 'klk cabeza',
     status: 'Frontend dev',
-    select: false,
     id: 4,
+    uid: 'uid_4',
   ),
 ];

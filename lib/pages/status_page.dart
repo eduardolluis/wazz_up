@@ -23,7 +23,7 @@ class _StatusPageState extends State<StatusPage> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           ListTile(
             leading: const Icon(Icons.photo_library, color: Colors.teal),
-            title: const Text('Foto de galería'),
+            title: const Text('Photo from gallery'),
             onTap: () {
               Navigator.pop(context);
               _pickImageStatus();
@@ -31,7 +31,7 @@ class _StatusPageState extends State<StatusPage> {
           ),
           ListTile(
             leading: const Icon(Icons.text_fields, color: Colors.teal),
-            title: const Text('Estado de texto'),
+            title: const Text('Status de texto'),
             onTap: () {
               Navigator.pop(context);
               _showTextStatusEditor();
@@ -66,14 +66,14 @@ class _StatusPageState extends State<StatusPage> {
             child: TextField(
               controller: captionCtrl,
               decoration:
-                  const InputDecoration(hintText: 'Pie de foto (opcional)...'),
+                  const InputDecoration(hintText: 'Image caption (optional)...'),
             ),
           ),
         ]),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar')),
+              child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.greenAccent[700]),
@@ -85,25 +85,27 @@ class _StatusPageState extends State<StatusPage> {
                   imageFile: imageFile,
                   caption: captionCtrl.text.trim(),
                 );
-                if (mounted)
+                if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                         content: Text('Estado publicado'),
                         backgroundColor: Colors.green),
                   );
+                }
               } catch (e) {
-                if (mounted)
+                if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content: Text('Error: $e'),
                         backgroundColor: Colors.red),
                   );
+                }
               } finally {
                 if (mounted) setState(() => _isPublishing = false);
               }
             },
             child:
-                const Text('Publicar', style: TextStyle(color: Colors.white)),
+                const Text('Publish', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -174,7 +176,7 @@ class _StatusPageState extends State<StatusPage> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.white, fontSize: 22),
                 decoration: const InputDecoration(
-                  hintText: '¿Qué quieres compartir?',
+                  hintText: 'What do you want to share?',
                   hintStyle: TextStyle(color: Colors.white54, fontSize: 22),
                   border: InputBorder.none,
                   counterStyle: TextStyle(color: Colors.white54),
@@ -198,26 +200,28 @@ class _StatusPageState extends State<StatusPage> {
                     text: text,
                     backgroundColor: selectedColor,
                   );
-                  if (mounted)
+                  if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text('Estado publicado'),
+                          content: Text('Status published'),
                           backgroundColor: Colors.green),
                     );
+                  }
                 } catch (e) {
-                  if (mounted)
+                  if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                           content: Text('Error: $e'),
                           backgroundColor: Colors.red),
                     );
+                  }
                 } finally {
                   if (mounted) setState(() => _isPublishing = false);
                 }
               },
               icon: Icon(Icons.send, color: Color(selectedColor)),
               label: Text(
-                'Publicar',
+                'Publish',
                 style: TextStyle(
                     color: Color(selectedColor), fontWeight: FontWeight.bold),
               ),
@@ -296,11 +300,11 @@ class _StatusPageState extends State<StatusPage> {
                   child: HeadOwnStatus(),
                 ),
                 if (myDocs.isNotEmpty) ...[
-                  _sectionLabel('Mis estados', context),
+                  _sectionLabel('My Statuses', context),
                   GestureDetector(
-                    onTap: () => _openViewer(myDocs, 'Mi estado'),
+                    onTap: () => _openViewer(myDocs, 'My Statuses'),
                     child: OtherStatus(
-                      name: 'Mi estado (${myDocs.length})',
+                      name: 'My Status (${myDocs.length})',
                       time: _docTime(myDocs.last, context),
                       imageName: '',
                       isSeen: true,
@@ -309,7 +313,7 @@ class _StatusPageState extends State<StatusPage> {
                   ),
                 ],
                 if (grouped.isNotEmpty) ...[
-                  _sectionLabel('Actualizaciones recientes', context),
+                  _sectionLabel('Recent Updates', context),
                   ...grouped.entries.map((entry) {
                     final userDocs = entry.value;
                     final data = userDocs.first.data() as Map<String, dynamic>;
@@ -340,7 +344,7 @@ class _StatusPageState extends State<StatusPage> {
                             size: 70, color: Colors.grey[400]),
                         const SizedBox(height: 16),
                         Text(
-                          'No hay estados recientes',
+                          'There are no recent status',
                           style:
                               TextStyle(color: Colors.grey[500], fontSize: 16),
                         ),
@@ -348,7 +352,7 @@ class _StatusPageState extends State<StatusPage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 40),
                           child: Text(
-                            'Toca el botón para publicar tu primer estado',
+                            'Tap the button to post your first status',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                                 color: Colors.grey[400], fontSize: 13),
@@ -443,10 +447,10 @@ class _FirestoreStatusViewerState extends State<FirestoreStatusViewer>
   String _timeAgo(DateTime? dt) {
     if (dt == null) return '';
     final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Ahora';
-    if (diff.inMinutes < 60) return 'Hace ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'Hace ${diff.inHours} h';
-    return 'Hace ${diff.inDays} d';
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} h ago';
+    return '${diff.inDays} d ago';
   }
 
   @override

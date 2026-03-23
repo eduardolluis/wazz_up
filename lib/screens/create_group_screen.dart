@@ -8,9 +8,6 @@ import 'package:whatzapp/data/contact_data.dart';
 import 'package:whatzapp/model/chat_model.dart';
 import 'package:whatzapp/screens/home_screen.dart';
 
-// ────────────────────────────────────────────────────────────────────────────
-// Step 1: pick participants
-// ────────────────────────────────────────────────────────────────────────────
 class CreateGroupPage extends StatefulWidget {
   const CreateGroupPage({super.key});
 
@@ -19,13 +16,27 @@ class CreateGroupPage extends StatefulWidget {
 }
 
 class _CreateGroupPageState extends State<CreateGroupPage> {
-  List<ChatModel> groupMember = [];
+  final List<ChatModel> groupMember = [];
   final String _searchQuery = '';
 
   List<ChatModel> get _filtered => chatModels
-      .where((c) =>
-          c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+      .where((c) => c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
       .toList();
+
+  bool _isSelected(ChatModel chat) {
+    return groupMember.any((m) => m.uid == chat.uid);
+  }
+
+  void _toggleMember(ChatModel chat) {
+    setState(() {
+      final index = groupMember.indexWhere((m) => m.uid == chat.uid);
+      if (index >= 0) {
+        groupMember.removeAt(index);
+      } else {
+        groupMember.add(chat);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,21 +50,27 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('New Group',
-                      style: TextStyle(
-                          fontSize: 19, fontWeight: FontWeight.bold)),
-                  Text('${groupMember.length} of ${chatModels.length} selected',
-                      style: const TextStyle(fontSize: 13)),
+                  const Text(
+                    'New Group',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '${groupMember.length} of ${chatModels.length} selected',
+                    style: const TextStyle(fontSize: 13),
+                  ),
                 ],
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
-                  Text('New Group',
-                      style: TextStyle(
-                          fontSize: 19, fontWeight: FontWeight.bold)),
-                  Text('Add participants',
-                      style: TextStyle(fontSize: 13)),
+                  Text(
+                    'New Group',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Add participants',
+                    style: TextStyle(fontSize: 13),
+                  ),
                 ],
               ),
         actions: [
@@ -64,17 +81,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 delegate: _ContactSearchDelegate(
                   contacts: chatModels,
                   selected: groupMember,
-                  onToggle: (c) {
-                    setState(() {
-                      if (c.select) {
-                        c.select = false;
-                        groupMember.remove(c);
-                      } else {
-                        c.select = true;
-                        groupMember.add(c);
-                      }
-                    });
-                  },
+                  onToggle: (c) => _toggleMember(c),
                 ),
               );
             },
@@ -85,12 +92,21 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             onSelected: (value) => debugPrint(value),
             itemBuilder: (context) => const [
               PopupMenuItem(
-                  value: "Invite a friend",
-                  child: Text("Invite a friend")),
+                value: 'Invite a friend',
+                child: Text('Invite a friend'),
+              ),
               PopupMenuItem(
-                  value: "Contacts", child: Text("Contacts")),
-              PopupMenuItem(value: "Help", child: Text("Help")),
-              PopupMenuItem(value: "Refresh", child: Text("Refresh")),
+                value: 'Contacts',
+                child: Text('Contacts'),
+              ),
+              PopupMenuItem(
+                value: 'Help',
+                child: Text('Help'),
+              ),
+              PopupMenuItem(
+                value: 'Refresh',
+                child: Text('Refresh'),
+              ),
             ],
           ),
         ],
@@ -102,13 +118,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) =>
-                        GroupNamePage(members: groupMember),
+                    builder: (_) => GroupNamePage(members: groupMember),
                   ),
                 );
               },
-              child: const Icon(Icons.arrow_forward,
-                  color: Colors.white),
+              child: const Icon(Icons.arrow_forward, color: Colors.white),
             )
           : null,
       body: Stack(
@@ -117,22 +131,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
             itemCount: _filtered.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
-                return Container(
-                    height: groupMember.isNotEmpty ? 90 : 10);
+                return Container(height: groupMember.isNotEmpty ? 90 : 10);
               }
+
+              final contact = _filtered[index - 1];
+
               return InkWell(
-                onTap: () {
-                  setState(() {
-                    if (_filtered[index - 1].select) {
-                      _filtered[index - 1].select = false;
-                      groupMember.remove(_filtered[index - 1]);
-                    } else {
-                      _filtered[index - 1].select = true;
-                      groupMember.add(_filtered[index - 1]);
-                    }
-                  });
-                },
-                child: ContactCard(contact: _filtered[index - 1]),
+                onTap: () => _toggleMember(contact),
+                child: ContactCard(contact: contact),
               );
             },
           ),
@@ -144,21 +150,13 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   color: Colors.white,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: chatModels.length,
+                    itemCount: groupMember.length,
                     itemBuilder: (_, index) {
-                      if (chatModels[index].select) {
-                        return InkWell(
-                          onTap: () {
-                            setState(() {
-                              groupMember.remove(chatModels[index]);
-                              chatModels[index].select = false;
-                            });
-                          },
-                          child: AvatarCard(
-                              contact: chatModels[index]),
-                        );
-                      }
-                      return const SizedBox.shrink();
+                      final member = groupMember[index];
+                      return InkWell(
+                        onTap: () => _toggleMember(member),
+                        child: AvatarCard(contact: member),
+                      );
                     },
                   ),
                 ),
@@ -171,11 +169,9 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Step 2: set group name + icon
-// ────────────────────────────────────────────────────────────────────────────
 class GroupNamePage extends StatefulWidget {
   final List<ChatModel> members;
+
   const GroupNamePage({super.key, required this.members});
 
   @override
@@ -195,59 +191,71 @@ class _GroupNamePageState extends State<GroupNamePage> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final result =
-        await picker.pickImage(source: ImageSource.gallery);
+    final result = await picker.pickImage(source: ImageSource.gallery);
     if (result != null) {
       setState(() => _groupImage = File(result.path));
     }
   }
 
   Future<void> _createGroup() async {
-    if (_nameCtrl.text.trim().isEmpty) {
+    final groupName = _nameCtrl.text.trim();
+
+    if (groupName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("Por favor ingresa un nombre para el grupo")),
+          content: Text('Please enter a name for the group'),
+        ),
       );
       return;
     }
 
     setState(() => _isCreating = true);
 
-    // Simulate creating and adding to chat list
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      await Future.delayed(const Duration(milliseconds: 600));
 
-    final newGroup = ChatModel(
-      name: _nameCtrl.text.trim(),
-      icon: 'groups.svg',
-      isGroup: true,
-      time: TimeOfDay.now().format(context),
-      currentMessage: 'Grupo creado',
-      status: '${widget.members.length} participantes',
-      select: false,
-      id: DateTime.now().millisecondsSinceEpoch,
-    );
+      final now = DateTime.now();
+      final groupUid = 'group_${now.millisecondsSinceEpoch}';
 
-    chatModels.add(newGroup);
+      final newGroup = ChatModel(
+        name: groupName,
+        icon: 'groups.svg',
+        isGroup: true,
+        time: TimeOfDay.now().format(context),
+        currentMessage: 'Group created',
+        status: '${widget.members.length} participants',
+        id: now.millisecondsSinceEpoch,
+        uid: groupUid,
+      );
 
-    // Reset all selections
-    for (final m in widget.members) {
-      m.select = false;
-    }
+      chatModels.add(newGroup);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
           content: Text(
-              'Grupo "${newGroup.name}" creado con ${widget.members.length} miembros')),
-    );
+            'Group "${newGroup.name}" created with ${widget.members.length} members',
+          ),
+        ),
+      );
 
-    // Go back to home
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-      (route) => false,
-    );
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error creating group: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isCreating = false);
+      }
+    }
   }
 
   @override
@@ -258,9 +266,10 @@ class _GroupNamePageState extends State<GroupNamePage> {
       appBar: AppBar(
         backgroundColor: cs.primary,
         foregroundColor: Colors.white,
-        title: const Text('New Group',
-            style:
-                TextStyle(fontSize: 19, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'New Group',
+          style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -274,12 +283,14 @@ class _GroupNamePageState extends State<GroupNamePage> {
                   CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.blueGrey[300],
-                    backgroundImage: _groupImage != null
-                        ? FileImage(_groupImage!)
-                        : null,
+                    backgroundImage:
+                        _groupImage != null ? FileImage(_groupImage!) : null,
                     child: _groupImage == null
-                        ? const Icon(Icons.group,
-                            size: 50, color: Colors.white)
+                        ? const Icon(
+                            Icons.group,
+                            size: 50,
+                            color: Colors.white,
+                          )
                         : null,
                   ),
                   Positioned(
@@ -288,8 +299,11 @@ class _GroupNamePageState extends State<GroupNamePage> {
                     child: CircleAvatar(
                       radius: 17,
                       backgroundColor: cs.secondary,
-                      child: const Icon(Icons.camera_alt,
-                          size: 18, color: Colors.white),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        size: 18,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -303,24 +317,22 @@ class _GroupNamePageState extends State<GroupNamePage> {
               decoration: InputDecoration(
                 hintText: 'Group name',
                 enabledBorder: UnderlineInputBorder(
-                  borderSide:
-                      BorderSide(color: cs.secondary, width: 1.8),
+                  borderSide: BorderSide(color: cs.secondary, width: 1.8),
                 ),
                 focusedBorder: UnderlineInputBorder(
-                  borderSide:
-                      BorderSide(color: cs.secondary, width: 2.5),
+                  borderSide: BorderSide(color: cs.secondary, width: 2.5),
                 ),
               ),
             ),
             const SizedBox(height: 24),
-            // Members preview
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Participantes: ${widget.members.length}',
+                'Participants: ${widget.members.length}',
                 style: TextStyle(
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.bold),
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -331,8 +343,7 @@ class _GroupNamePageState extends State<GroupNamePage> {
                 itemCount: widget.members.length,
                 itemBuilder: (_, i) {
                   return Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: Column(
                       children: [
                         CircleAvatar(
@@ -340,8 +351,9 @@ class _GroupNamePageState extends State<GroupNamePage> {
                           child: Text(
                             widget.members[i].name[0].toUpperCase(),
                             style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -369,9 +381,6 @@ class _GroupNamePageState extends State<GroupNamePage> {
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Search delegate for contacts
-// ────────────────────────────────────────────────────────────────────────────
 class _ContactSearchDelegate extends SearchDelegate<ChatModel?> {
   final List<ChatModel> contacts;
   final List<ChatModel> selected;
@@ -383,11 +392,16 @@ class _ContactSearchDelegate extends SearchDelegate<ChatModel?> {
     required this.onToggle,
   });
 
+  bool _isSelected(ChatModel chat) {
+    return selected.any((m) => m.uid == chat.uid);
+  }
+
   @override
   List<Widget> buildActions(BuildContext context) => [
         IconButton(
-            onPressed: () => query = '',
-            icon: const Icon(Icons.clear))
+          onPressed: () => query = '',
+          icon: const Icon(Icons.clear),
+        ),
       ];
 
   @override
@@ -404,13 +418,13 @@ class _ContactSearchDelegate extends SearchDelegate<ChatModel?> {
 
   Widget _buildList() {
     final results = contacts
-        .where((c) =>
-            c.name.toLowerCase().contains(query.toLowerCase()))
+        .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
         .toList();
+
     return ListView.builder(
       itemCount: results.length,
       itemBuilder: (_, i) => CheckboxListTile(
-        value: results[i].select,
+        value: _isSelected(results[i]),
         onChanged: (_) => onToggle(results[i]),
         title: Text(results[i].name),
         subtitle: Text(results[i].status),

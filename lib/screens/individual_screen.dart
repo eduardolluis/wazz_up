@@ -38,7 +38,7 @@ class _IndividualPageState extends State<IndividualPage> {
   bool _searchMode = false;
   String _searchQuery = '';
 
-  final focusNode = FocusNode();
+  final FocusNode focusNode = FocusNode();
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchCtrl = TextEditingController();
@@ -51,17 +51,20 @@ class _IndividualPageState extends State<IndividualPage> {
 
   static const double _cancelThreshold = -120;
 
-  String? get _myUid => FirebaseAuth.instance.currentUser?.uid;
+  String? get _myUid => FirebaseAuth.instance.currentUser?.uid.trim();
 
-  String get _myName =>
-      FirebaseAuth.instance.currentUser?.displayName?.trim().isNotEmpty == true
-          ? FirebaseAuth.instance.currentUser!.displayName!.trim()
-          : widget.sourceChat.name;
+  String get _myName {
+    final authName = FirebaseAuth.instance.currentUser?.displayName?.trim();
+    if (authName != null && authName.isNotEmpty) {
+      return authName;
+    }
+    return widget.sourceChat.name;
+  }
 
-  /// IMPORTANTE:
-  /// Esto asume que chatModel.id es el UID real de Firebase del otro usuario.
-  /// Si no lo es, cámbialo por el campo correcto, por ejemplo: widget.chatModel.uid
-  String get _otherUid => widget.chatModel.id.toString();
+  String get _otherUid {
+    final value = widget.chatModel.uid.toString().trim() ?? '';
+    return value;
+  }
 
   late final String _conversationId;
 
@@ -70,14 +73,22 @@ class _IndividualPageState extends State<IndividualPage> {
     super.initState();
 
     final myUid = _myUid;
+    final otherUid = _otherUid;
+
+    debugPrint('MY UID: $myUid');
+    debugPrint('OTHER UID: $otherUid');
+
     if (myUid == null || myUid.isEmpty) {
       _conversationId = '';
       debugPrint('❌ No hay usuario autenticado en FirebaseAuth');
+    } else if (otherUid.isEmpty) {
+      _conversationId = '';
+      debugPrint('❌ El UID del otro usuario está vacío');
+    } else if (myUid == otherUid) {
+      _conversationId = myUid;
+      debugPrint('⚠️ Chat contigo mismo, conversationId: $_conversationId');
     } else {
-      _conversationId = MessageService.conversationId(myUid, _otherUid);
-      debugPrint('✅ myUid: $myUid');
-      debugPrint('✅ otherUid: $_otherUid');
-      debugPrint('✅ conversationId: $_conversationId');
+      _conversationId = MessageService.conversationId(myUid, otherUid);
     }
 
     focusNode.addListener(() {
@@ -112,11 +123,24 @@ class _IndividualPageState extends State<IndividualPage> {
 
   Future<void> _sendText(String text) async {
     final myUid = _myUid;
+    final otherUid = _otherUid;
+
     if (myUid == null || myUid.isEmpty) {
-      _showSnack('No hay usuario autenticado');
+      _showSnack('There is no authenticated user');
       return;
     }
 
+if (otherUid.isEmpty) {
+_showSnack('Chat user not found');
+return;
+
+}
+
+if (_conversationId.isEmpty) {
+_showSnack('Invalid conversation');
+return;
+
+}
     if (text.trim().isEmpty) return;
 
     try {
@@ -128,18 +152,29 @@ class _IndividualPageState extends State<IndividualPage> {
         text: text.trim(),
         senderUid: myUid,
         senderName: _myName,
-        receiverUid: _otherUid,
+        receiverUid: otherUid,
       );
     } catch (e) {
-      _showSnack('Error enviando mensaje');
-      debugPrint('❌ _sendText: $e');
+      _showSnack('Error sending message');
     }
   }
 
   Future<void> _sendImage(String imagePath) async {
     final myUid = _myUid;
+    final otherUid = _otherUid;
+
     if (myUid == null || myUid.isEmpty) {
-      _showSnack('No hay usuario autenticado');
+      _showSnack('There is no authenticated user');
+      return;
+    }
+
+    if (otherUid.isEmpty) {
+      _showSnack('Chat user not found');
+      return;
+    }
+
+    if (_conversationId.isEmpty) {
+      _showSnack('Invalid conversation');
       return;
     }
 
@@ -149,11 +184,10 @@ class _IndividualPageState extends State<IndividualPage> {
         imagePath: imagePath,
         senderUid: myUid,
         senderName: _myName,
-        receiverUid: _otherUid,
+        receiverUid: otherUid,
       );
     } catch (e) {
-      _showSnack('Error enviando imagen');
-      debugPrint('❌ _sendImage: $e');
+      _showSnack('Error sending image');
     }
   }
 
@@ -162,8 +196,20 @@ class _IndividualPageState extends State<IndividualPage> {
     required String durationLabel,
   }) async {
     final myUid = _myUid;
+    final otherUid = _otherUid;
+
     if (myUid == null || myUid.isEmpty) {
       _showSnack('No hay usuario autenticado');
+      return;
+    }
+
+    if (otherUid.isEmpty) {
+      _showSnack('Chat user not found');
+      return;
+    }
+
+    if (_conversationId.isEmpty) {
+      _showSnack('Invalid conversation');
       return;
     }
 
@@ -174,18 +220,29 @@ class _IndividualPageState extends State<IndividualPage> {
         durationLabel: durationLabel,
         senderUid: myUid,
         senderName: _myName,
-        receiverUid: _otherUid,
+        receiverUid: otherUid,
       );
     } catch (e) {
-      _showSnack('Error enviando audio');
-      debugPrint('❌ _sendAudio: $e');
+      _showSnack('Error sending audio');
     }
   }
 
   Future<void> _sendAttachment(String content, String type) async {
     final myUid = _myUid;
+    final otherUid = _otherUid;
+
     if (myUid == null || myUid.isEmpty) {
-      _showSnack('No hay usuario autenticado');
+      _showSnack('There is no authenticated user');
+      return;
+    }
+
+    if (otherUid.isEmpty) {
+      _showSnack('Chat user not found');
+      return;
+    }
+
+    if (_conversationId.isEmpty) {
+      _showSnack('Invalid conversation');
       return;
     }
 
@@ -196,11 +253,10 @@ class _IndividualPageState extends State<IndividualPage> {
         type: type,
         senderUid: myUid,
         senderName: _myName,
-        receiverUid: _otherUid,
+        receiverUid: otherUid,
       );
     } catch (e) {
-      _showSnack('Error enviando archivo');
-      debugPrint('❌ _sendAttachment: $e');
+      _showSnack('Error sending attachment');
     }
   }
 
@@ -247,7 +303,7 @@ class _IndividualPageState extends State<IndividualPage> {
 
     final hasPermission = await _audioRecorder.hasPermission();
     if (!hasPermission) {
-      _showSnack('Activa el permiso del micrófono');
+      _showSnack('Activate microphone permission');
       return;
     }
 
@@ -354,17 +410,22 @@ class _IndividualPageState extends State<IndividualPage> {
   }
 
   void _confirmClearChat() {
+    if (_conversationId.isEmpty) {
+      _showSnack('Invalid conversation');
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Borrar chat'),
+        title: const Text('Delete chat'),
         content: const Text(
-          '¿Borrar todos los mensajes? Esta acción no se puede deshacer.',
+          'Erase all messages? This action cannot be undone.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -385,12 +446,11 @@ class _IndividualPageState extends State<IndividualPage> {
 
                 await batch.commit();
               } catch (e) {
-                _showSnack('Error borrando chat');
-                debugPrint('❌ clear chat: $e');
+                _showSnack('Error deleting chat');
               }
             },
             child: const Text(
-              'Borrar',
+              'Delete',
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -442,8 +502,8 @@ class _IndividualPageState extends State<IndividualPage> {
                     offset: Offset(_dragDx < 0 ? _dragDx * 0.15 : 0, 0),
                     child: Text(
                       isCancellingAudio
-                          ? 'Suelta para borrar'
-                          : 'Grabando... ← para borrar',
+                          ? 'Release to delete'
+                          : 'Recording... ← to delete',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -695,7 +755,7 @@ class _IndividualPageState extends State<IndividualPage> {
                   _confirmClearChat();
                   break;
                 case 'Mute':
-                  _showSnack('Notificaciones silenciadas');
+                  _showSnack('Notifications muted');
                   break;
               }
             },
@@ -728,30 +788,51 @@ class _IndividualPageState extends State<IndividualPage> {
   }
 
   Widget _buildBody() {
-    if (_myUid == null || _myUid!.isEmpty) {
+    final myUid = _myUid;
+    final otherUid = _otherUid;
+
+    if (myUid == null || myUid.isEmpty) {
       return const Center(
-        child: Text('No hay usuario autenticado'),
+        child: Text('There is no authenticated user'),
+      );
+    }
+
+    if (otherUid.isEmpty) {
+      return const Center(
+        child: Text('The chat user does not have a valid UID'),
       );
     }
 
     if (_conversationId.isEmpty) {
       return const Center(
-        child: Text('No se pudo crear la conversación'),
+        child: Text('Failed to create conversation'),
       );
     }
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: MessageService.messagesStream(_conversationId),
       builder: (context, snapshot) {
-        debugPrint('STATE: ${snapshot.connectionState}');
-        debugPrint('HAS ERROR: ${snapshot.hasError}');
-        debugPrint('ERROR: ${snapshot.error}');
-        debugPrint('HAS DATA: ${snapshot.hasData}');
-        debugPrint('DOCS: ${snapshot.data?.docs.length}');
-
         if (snapshot.hasError) {
           return Center(
-            child: Text('Error: ${snapshot.error}'),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Error:\n${snapshot.error}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
@@ -763,9 +844,7 @@ class _IndividualPageState extends State<IndividualPage> {
 
         final docs = snapshot.data?.docs ?? [];
 
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollToBottom();
-        });
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
         if (docs.isEmpty) {
           return Center(
@@ -859,4 +938,4 @@ class _IndividualPageState extends State<IndividualPage> {
       ],
     );
   }
-}
+} 

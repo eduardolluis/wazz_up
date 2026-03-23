@@ -12,6 +12,7 @@ class LoginScreenPage extends StatefulWidget {
 
 class _LoginScreenPageState extends State<LoginScreenPage> {
   late ChatModel sourceChat;
+
   List<ChatModel> chatModels = [
     ChatModel(
       name: 'Eduardo',
@@ -20,8 +21,8 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       time: '18:04',
       currentMessage: 'Hi there',
       status: 'A full stack developer',
-      select: false,
       id: 1,
+      uid: 'uid_1',
     ),
     ChatModel(
       name: 'Marcos',
@@ -29,9 +30,9 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       isGroup: false,
       time: '18:04',
       currentMessage: 'hellouuu there',
-      status: ' x  developer',
-      select: false,
+      status: 'x developer',
       id: 2,
+      uid: 'uid_2',
     ),
     ChatModel(
       name: 'dadada',
@@ -39,21 +40,22 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
       isGroup: false,
       time: '18:04',
       currentMessage: 'hellouuu there',
-      status: ' junior  ',
-      select: false,
+      status: 'junior',
       id: 3,
+      uid: 'uid_3',
     ),
     ChatModel(
       name: 'malcom',
       icon: 'person.svg',
       isGroup: false,
       time: '18:04',
-      currentMessage: 'klk cabeza ',
-      status: 'fronted  ',
-      select: false,
+      currentMessage: 'klk cabeza',
+      status: 'frontend',
       id: 4,
+      uid: 'uid_4',
     ),
   ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,15 +64,21 @@ class _LoginScreenPageState extends State<LoginScreenPage> {
         itemBuilder: (BuildContext context, int index) => InkWell(
           onTap: () {
             sourceChat = chatModels.removeAt(index);
+
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (builder) =>
-                    HomeScreen(chatmodels: chatModels, sourceChat: sourceChat),
+                builder: (builder) => HomeScreen(
+                  chatmodels: chatModels,
+                  sourceChat: sourceChat,
+                ),
               ),
             );
           },
-          child: ButtonCard(name: chatModels[index].name, icon: Icons.person),
+          child: ButtonCard(
+            name: chatModels[index].name,
+            icon: Icons.person,
+          ),
         ),
       ),
     );

@@ -38,12 +38,12 @@ class _AddContactPageState extends State<AddContactPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Tomar foto'),
+              title: const Text('Take Photo'),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.image),
-              title: const Text('Elegir de galería'),
+              title: const Text('Choose from Gallery'),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -64,17 +64,17 @@ class _AddContactPageState extends State<AddContactPage> {
     await Future.delayed(const Duration(milliseconds: 400));
 
     final newContact = ChatModel(
-      name: _nameCtrl.text.trim(),
-      icon: 'person.svg',
-      isGroup: false,
-      time: '',
-      currentMessage: '',
-      status: _statusCtrl.text.trim().isNotEmpty
-          ? _statusCtrl.text.trim()
-          : 'Hey there! I am using WhatZapp',
-      select: false,
-      id: DateTime.now().millisecondsSinceEpoch,
-    );
+  name: _nameCtrl.text.trim(),
+  icon: 'person.svg',
+  isGroup: false,
+  time: '',
+  currentMessage: '',
+  status: _statusCtrl.text.trim().isNotEmpty
+      ? _statusCtrl.text.trim()
+      : 'Hey there! I am using WhatZapp',
+  id: DateTime.now().millisecondsSinceEpoch,
+  uid: 'contact_${DateTime.now().millisecondsSinceEpoch}',
+);
 
     chatModels.add(newContact);
 
@@ -82,7 +82,7 @@ class _AddContactPageState extends State<AddContactPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Contacto "${newContact.name}" guardado'),
+        content: Text('Contacto "${newContact.name}" saved'),
         backgroundColor: Colors.green,
       ),
     );
@@ -98,12 +98,12 @@ class _AddContactPageState extends State<AddContactPage> {
       appBar: AppBar(
         backgroundColor: cs.primary,
         foregroundColor: Colors.white,
-        title: const Text('Nuevo contacto',
+        title: const Text('New Contact',
             style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           TextButton(
             onPressed: _isSaving ? null : _save,
-            child: const Text('Guardar',
+            child: const Text('Save',
                 style: TextStyle(color: Colors.white, fontSize: 16)),
           ),
         ],
@@ -151,7 +151,7 @@ class _AddContactPageState extends State<AddContactPage> {
                 icon: Icons.person_outline,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'El nombre es obligatorio';
+                    return 'The name is required';
                   }
                   return null;
                 },
@@ -161,16 +161,16 @@ class _AddContactPageState extends State<AddContactPage> {
               // Phone
               _FormField(
                 controller: _phoneCtrl,
-                label: 'Teléfono',
+                label: 'Phone Number',
                 icon: Icons.phone_outlined,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
-                    return 'El número es obligatorio';
+                    return 'The phone number is required';
                   }
                   if (v.trim().length < 7) {
-                    return 'Número inválido';
+                    return 'IInvalid phone number';
                   }
                   return null;
                 },
@@ -180,7 +180,7 @@ class _AddContactPageState extends State<AddContactPage> {
               // Status
               _FormField(
                 controller: _statusCtrl,
-                label: 'Estado (opcional)',
+                label: 'Status (opcional)',
                 icon: Icons.info_outline,
                 maxLength: 60,
               ),
@@ -205,7 +205,7 @@ class _AddContactPageState extends State<AddContactPage> {
                               color: Colors.white, strokeWidth: 2),
                         )
                       : const Icon(Icons.save, color: Colors.white),
-                  label: const Text('Guardar contacto',
+                  label: const Text('Save contact',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,

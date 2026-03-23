@@ -5,30 +5,38 @@ import 'package:flutter/foundation.dart';
 class MessageService {
   static final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// ID de conversación estable entre dos usuarios
   static String conversationId(String uid1, String uid2) {
     final sorted = [uid1, uid2]..sort();
     return '${sorted[0]}_${sorted[1]}';
   }
 
-  /// UID del usuario autenticado
   static String? get myUid => FirebaseAuth.instance.currentUser?.uid;
 
-  /// Stream de mensajes en tiempo real
   static Stream<QuerySnapshot<Map<String, dynamic>>> messagesStream(
     String conversationId,
   ) {
-    debugPrint('📡 Escuchando conversación: $conversationId');
 
     return _db
         .collection('conversations')
         .doc(conversationId)
         .collection('messages')
-        .orderBy('timestamp', descending: false)
+        .orderBy('timestamp')
         .snapshots();
   }
 
-  /// Enviar mensaje de texto
+  static Future<void> _ensureConversation({
+    required String conversationId,
+    required String senderUid,
+    required String receiverUid,
+    required String lastMessage,
+  }) async {
+    await _db.collection('conversations').doc(conversationId).set({
+      'lastMessage': lastMessage,
+      'lastTimestamp': FieldValue.serverTimestamp(),
+      'participants': [senderUid, receiverUid],
+    }, SetOptions(merge: true));
+  }
+
   static Future<void> sendText({
     required String conversationId,
     required String text,
@@ -36,33 +44,34 @@ class MessageService {
     required String senderName,
     required String receiverUid,
   }) async {
-    if (text.trim().isEmpty) return;
+    final cleanText = text.trim();
+    if (cleanText.isEmpty) return;
 
     try {
+      await _ensureConversation(
+        conversationId: conversationId,
+        senderUid: senderUid,
+        receiverUid: receiverUid,
+        lastMessage: cleanText,
+      );
+
       await _db
           .collection('conversations')
           .doc(conversationId)
           .collection('messages')
           .add({
         'type': 'text',
-        'content': text.trim(),
+        'content': cleanText,
         'senderUid': senderUid,
         'senderName': senderName,
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      await _db.collection('conversations').doc(conversationId).set({
-        'lastMessage': text.trim(),
-        'lastTimestamp': FieldValue.serverTimestamp(),
-        'participants': [senderUid, receiverUid],
-      }, SetOptions(merge: true));
     } catch (e) {
-      debugPrint('❌ Error enviando texto: $e');
       rethrow;
     }
   }
 
-  /// Enviar mensaje de imagen
   static Future<void> sendImage({
     required String conversationId,
     required String imagePath,
@@ -71,6 +80,13 @@ class MessageService {
     required String receiverUid,
   }) async {
     try {
+      await _ensureConversation(
+        conversationId: conversationId,
+        senderUid: senderUid,
+        receiverUid: receiverUid,
+        lastMessage: '📷 Foto',
+      );
+
       await _db
           .collection('conversations')
           .doc(conversationId)
@@ -83,18 +99,11 @@ class MessageService {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      await _db.collection('conversations').doc(conversationId).set({
-        'lastMessage': '📷 Foto',
-        'lastTimestamp': FieldValue.serverTimestamp(),
-        'participants': [senderUid, receiverUid],
-      }, SetOptions(merge: true));
     } catch (e) {
-      debugPrint('❌ Error enviando imagen: $e');
       rethrow;
     }
   }
 
-  /// Enviar mensaje de audio
   static Future<void> sendAudio({
     required String conversationId,
     required String audioPath,
@@ -104,6 +113,13 @@ class MessageService {
     required String receiverUid,
   }) async {
     try {
+      await _ensureConversation(
+        conversationId: conversationId,
+        senderUid: senderUid,
+        receiverUid: receiverUid,
+        lastMessage: '🎤 Audio',
+      );
+
       await _db
           .collection('conversations')
           .doc(conversationId)
@@ -117,18 +133,11 @@ class MessageService {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      await _db.collection('conversations').doc(conversationId).set({
-        'lastMessage': '🎤 Audio',
-        'lastTimestamp': FieldValue.serverTimestamp(),
-        'participants': [senderUid, receiverUid],
-      }, SetOptions(merge: true));
     } catch (e) {
-      debugPrint('❌ Error enviando audio: $e');
       rethrow;
     }
   }
 
-  /// Enviar attachment (location, contact, document)
   static Future<void> sendAttachment({
     required String conversationId,
     required String content,
@@ -138,6 +147,16 @@ class MessageService {
     required String receiverUid,
   }) async {
     try {
+      final preview =
+          content.length > 40 ? '${content.substring(0, 40)}...' : content;
+
+      await _ensureConversation(
+        conversationId: conversationId,
+        senderUid: senderUid,
+        receiverUid: receiverUid,
+        lastMessage: preview,
+      );
+
       await _db
           .collection('conversations')
           .doc(conversationId)
@@ -150,14 +169,7 @@ class MessageService {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      await _db.collection('conversations').doc(conversationId).set({
-        'lastMessage':
-            content.length > 40 ? '${content.substring(0, 40)}...' : content,
-        'lastTimestamp': FieldValue.serverTimestamp(),
-        'participants': [senderUid, receiverUid],
-      }, SetOptions(merge: true));
     } catch (e) {
-      debugPrint('❌ Error enviando attachment: $e');
       rethrow;
     }
   }

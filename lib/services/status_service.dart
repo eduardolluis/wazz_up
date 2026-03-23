@@ -8,26 +8,21 @@ class StatusService {
   static final _db = FirebaseFirestore.instance;
   static final _storage = FirebaseStorage.instance;
 
-  static String get myUid =>
-      FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+  static String get myUid => FirebaseAuth.instance.currentUser?.uid ?? 'anon';
 
   static String get myName =>
       FirebaseAuth.instance.currentUser?.displayName ??
       FirebaseAuth.instance.currentUser?.phoneNumber ??
       'Usuario';
 
-  /// Stream de todos los estados activos (últimas 24h)
   static Stream<QuerySnapshot> statusesStream() {
     final cutoff = DateTime.now().subtract(const Duration(hours: 24));
     return _db
         .collection('statuses')
-        .where('expiresAt',
-            isGreaterThan: Timestamp.fromDate(cutoff))
-        .orderBy('expiresAt', descending: false)
+        .where('expiresAt', isGreaterThan: Timestamp.fromDate(cutoff))
         .snapshots();
   }
 
-  /// Stream de estados de un usuario específico
   static Stream<QuerySnapshot> userStatusesStream(String uid) {
     final cutoff = DateTime.now().subtract(const Duration(hours: 24));
     return _db
@@ -38,7 +33,6 @@ class StatusService {
         .snapshots();
   }
 
-  /// Publicar estado de texto
   static Future<void> publishTextStatus({
     required String text,
     required int backgroundColor,
@@ -51,13 +45,11 @@ class StatusService {
       'content': text,
       'backgroundColor': backgroundColor,
       'createdAt': Timestamp.fromDate(now),
-      'expiresAt':
-          Timestamp.fromDate(now.add(const Duration(hours: 24))),
+      'expiresAt': Timestamp.fromDate(now.add(const Duration(hours: 24))),
       'viewers': [],
     });
   }
 
-  /// Publicar estado de imagen (sube a Storage primero)
   static Future<void> publishImageStatus({
     required File imageFile,
     String caption = '',
@@ -77,20 +69,17 @@ class StatusService {
       'content': url,
       'caption': caption,
       'createdAt': Timestamp.fromDate(now),
-      'expiresAt':
-          Timestamp.fromDate(now.add(const Duration(hours: 24))),
+      'expiresAt': Timestamp.fromDate(now.add(const Duration(hours: 24))),
       'viewers': [],
     });
   }
 
-  /// Marcar un status como visto
   static Future<void> markSeen(String statusId) async {
     await _db.collection('statuses').doc(statusId).update({
       'viewers': FieldValue.arrayUnion([myUid]),
     });
   }
 
-  /// Agrupa los estados por usuario
   static Map<String, List<QueryDocumentSnapshot>> groupByUser(
       List<QueryDocumentSnapshot> docs) {
     final map = <String, List<QueryDocumentSnapshot>>{};
