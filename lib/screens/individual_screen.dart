@@ -62,7 +62,7 @@ class _IndividualPageState extends State<IndividualPage> {
   }
 
   String get _otherUid {
-    final value = widget.chatModel.uid.toString().trim() ?? '';
+    final value = widget.chatModel.uid.toString().trim();
     return value;
   }
 
@@ -130,17 +130,15 @@ class _IndividualPageState extends State<IndividualPage> {
       return;
     }
 
-if (otherUid.isEmpty) {
-_showSnack('Chat user not found');
-return;
+    if (otherUid.isEmpty) {
+      _showSnack('Chat user not found');
+      return;
+    }
 
-}
-
-if (_conversationId.isEmpty) {
-_showSnack('Invalid conversation');
-return;
-
-}
+    if (_conversationId.isEmpty) {
+      _showSnack('Invalid conversation');
+      return;
+    }
     if (text.trim().isEmpty) return;
 
     try {
@@ -478,8 +476,6 @@ return;
   }
 
   Widget _buildRecordingInput() {
-    final progress = (_dragDx.abs() / _cancelThreshold.abs()).clamp(0.0, 1.0);
-
     return Expanded(
       child: Container(
         margin: const EdgeInsets.only(left: 2, right: 2, bottom: 8),
@@ -518,7 +514,7 @@ return;
                     padding: const EdgeInsets.only(right: 8),
                     child: Icon(
                       Icons.keyboard_double_arrow_left,
-                      color: Colors.white.withOpacity(1 - (progress * 0.7)),
+                      color: Colors.white.withValues(),
                     ),
                   ),
                 Text(
@@ -906,7 +902,7 @@ return;
                 Expanded(child: _buildBody()),
                 if (_searchMode && _searchQuery.isNotEmpty)
                   Container(
-                    color: cs.primary.withOpacity(0.1),
+                    color: cs.primary.withValues(),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 4,
@@ -938,4 +934,4 @@ return;
       ],
     );
   }
-} 
+}

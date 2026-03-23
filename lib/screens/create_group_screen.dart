@@ -23,10 +23,6 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       .where((c) => c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
       .toList();
 
-  bool _isSelected(ChatModel chat) {
-    return groupMember.any((m) => m.uid == chat.uid);
-  }
-
   void _toggleMember(ChatModel chat) {
     setState(() {
       final index = groupMember.indexWhere((m) => m.uid == chat.uid);
