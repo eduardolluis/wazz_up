@@ -7,12 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:whatzapp/customUI/message_card.dart';
 import 'package:whatzapp/customUI/reply_card.dart';
 import 'package:whatzapp/model/chat_model.dart';
 import 'package:whatzapp/screens/camera_screen.dart';
 import 'package:whatzapp/screens/view_contact_screen.dart';
 import 'package:whatzapp/services/message_service.dart';
+import 'package:whatzapp/services/status_service.dart';
 import 'package:whatzapp/widgets/attachment_menu_widget.dart';
 import 'package:whatzapp/widgets/emoji_picker_widget.dart';
 
@@ -55,16 +57,11 @@ class _IndividualPageState extends State<IndividualPage> {
 
   String get _myName {
     final authName = FirebaseAuth.instance.currentUser?.displayName?.trim();
-    if (authName != null && authName.isNotEmpty) {
-      return authName;
-    }
+    if (authName != null && authName.isNotEmpty) return authName;
     return widget.sourceChat.name;
   }
 
-  String get _otherUid {
-    final value = widget.chatModel.uid.toString().trim();
-    return value;
-  }
+  String get _otherUid => widget.chatModel.uid.toString().trim();
 
   late final String _conversationId;
 
@@ -75,18 +72,12 @@ class _IndividualPageState extends State<IndividualPage> {
     final myUid = _myUid;
     final otherUid = _otherUid;
 
-    debugPrint('MY UID: $myUid');
-    debugPrint('OTHER UID: $otherUid');
-
     if (myUid == null || myUid.isEmpty) {
       _conversationId = '';
-      debugPrint('❌ No hay usuario autenticado en FirebaseAuth');
     } else if (otherUid.isEmpty) {
       _conversationId = '';
-      debugPrint('❌ El UID del otro usuario está vacío');
     } else if (myUid == otherUid) {
       _conversationId = myUid;
-      debugPrint('⚠️ Chat contigo mismo, conversationId: $_conversationId');
     } else {
       _conversationId = MessageService.conversationId(myUid, otherUid);
     }
@@ -112,7 +103,6 @@ class _IndividualPageState extends State<IndividualPage> {
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
-
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 250),
@@ -126,15 +116,13 @@ class _IndividualPageState extends State<IndividualPage> {
     final otherUid = _otherUid;
 
     if (myUid == null || myUid.isEmpty) {
-      _showSnack('There is no authenticated user');
+      _showSnack('No authenticated user');
       return;
     }
-
     if (otherUid.isEmpty) {
       _showSnack('Chat user not found');
       return;
     }
-
     if (_conversationId.isEmpty) {
       _showSnack('Invalid conversation');
       return;
@@ -162,15 +150,13 @@ class _IndividualPageState extends State<IndividualPage> {
     final otherUid = _otherUid;
 
     if (myUid == null || myUid.isEmpty) {
-      _showSnack('There is no authenticated user');
+      _showSnack('No authenticated user');
       return;
     }
-
     if (otherUid.isEmpty) {
       _showSnack('Chat user not found');
       return;
     }
-
     if (_conversationId.isEmpty) {
       _showSnack('Invalid conversation');
       return;
@@ -189,27 +175,23 @@ class _IndividualPageState extends State<IndividualPage> {
     }
   }
 
-  Future<void> _sendAudio(
-    String audioPath, {
-    required String durationLabel,
-  }) async {
+  Future<void> _publishImageToStatus(String imagePath) async {
+    try {
+      await StatusService.publishImageStatus(imageFile: File(imagePath));
+      _showSnack('Published to status!');
+    } catch (e) {
+      _showSnack('Error publishing status: $e');
+    }
+  }
+
+  Future<void> _sendAudio(String audioPath,
+      {required String durationLabel}) async {
     final myUid = _myUid;
     final otherUid = _otherUid;
 
-    if (myUid == null || myUid.isEmpty) {
-      _showSnack('No hay usuario autenticado');
-      return;
-    }
-
-    if (otherUid.isEmpty) {
-      _showSnack('Chat user not found');
-      return;
-    }
-
-    if (_conversationId.isEmpty) {
-      _showSnack('Invalid conversation');
-      return;
-    }
+    if (myUid == null || myUid.isEmpty) return;
+    if (otherUid.isEmpty) return;
+    if (_conversationId.isEmpty) return;
 
     try {
       await MessageService.sendAudio(
@@ -229,20 +211,9 @@ class _IndividualPageState extends State<IndividualPage> {
     final myUid = _myUid;
     final otherUid = _otherUid;
 
-    if (myUid == null || myUid.isEmpty) {
-      _showSnack('There is no authenticated user');
-      return;
-    }
-
-    if (otherUid.isEmpty) {
-      _showSnack('Chat user not found');
-      return;
-    }
-
-    if (_conversationId.isEmpty) {
-      _showSnack('Invalid conversation');
-      return;
-    }
+    if (myUid == null || myUid.isEmpty) return;
+    if (otherUid.isEmpty) return;
+    if (_conversationId.isEmpty) return;
 
     try {
       await MessageService.sendAttachment(
@@ -260,9 +231,8 @@ class _IndividualPageState extends State<IndividualPage> {
 
   void _showSnack(String text) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(text)));
   }
 
   String _formatSeconds(int s) {
@@ -274,11 +244,8 @@ class _IndividualPageState extends State<IndividualPage> {
   void _startRecordingTimer() {
     _recordingTimer?.cancel();
     recordingSeconds = 0;
-
     _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() => recordingSeconds++);
-      }
+      if (mounted) setState(() => recordingSeconds++);
     });
   }
 
@@ -301,14 +268,12 @@ class _IndividualPageState extends State<IndividualPage> {
 
     final hasPermission = await _audioRecorder.hasPermission();
     if (!hasPermission) {
-      _showSnack('Activate microphone permission');
+      _showSnack('Enable microphone permission');
       return;
     }
 
     focusNode.unfocus();
-    if (show && mounted) {
-      setState(() => show = false);
-    }
+    if (show && mounted) setState(() => show = false);
 
     final dir = await getTemporaryDirectory();
     final path =
@@ -336,14 +301,10 @@ class _IndividualPageState extends State<IndividualPage> {
 
   Future<void> cancelAudioRecording() async {
     _stopRecordingTimer();
-
     try {
       await _audioRecorder.cancel();
     } catch (_) {}
-
-    if (mounted) {
-      _resetRecordingState();
-    }
+    if (mounted) _resetRecordingState();
   }
 
   Future<void> stopAudioRecording() async {
@@ -358,7 +319,6 @@ class _IndividualPageState extends State<IndividualPage> {
     } catch (_) {}
 
     if (!mounted) return;
-
     _resetRecordingState();
 
     final finalPath = path ?? _currentAudioPath;
@@ -366,16 +326,12 @@ class _IndividualPageState extends State<IndividualPage> {
 
     final exists = await File(finalPath).exists();
     if (exists) {
-      await _sendAudio(
-        finalPath,
-        durationLabel: _formatSeconds(dur),
-      );
+      await _sendAudio(finalPath, durationLabel: _formatSeconds(dur));
     }
   }
 
   void handleRecordingDrag(LongPressMoveUpdateDetails d) {
     if (!isRecordingAudio || !mounted) return;
-
     setState(() {
       _dragDx = d.offsetFromOrigin.dx;
       isCancellingAudio = _dragDx <= _cancelThreshold;
@@ -383,16 +339,61 @@ class _IndividualPageState extends State<IndividualPage> {
   }
 
   Future<void> openCamera() async {
-    final p = await Navigator.push<String>(
+    final result = await Navigator.push<Map<String, String>>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const CameraScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const CameraScreen()),
     );
 
-    if (p != null && p.isNotEmpty) {
-      await _sendImage(p);
+    if (result == null || !mounted) return;
+
+    final action = result['action'];
+    final path = result['path'];
+
+    if (path == null || path.isEmpty) return;
+
+    if (action == 'status') {
+      await _publishImageToStatus(path);
+    } else {
+      await _sendImage(path);
     }
+  }
+
+  void _launchCall(String phone, {bool isVideo = false}) async {
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      _showSnack(isVideo ? 'Cannot start video call' : 'Cannot make call');
+    }
+  }
+
+  void _startVoiceCall() {
+    final phone = widget.chatModel.status.trim();
+    if (phone.startsWith('+') || RegExp(r'^\d{7,}').hasMatch(phone)) {
+      _launchCall(phone);
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => _SimulatedCallScreen(
+            contactName: widget.chatModel.name,
+            isVideo: false,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _startVideoCall() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _SimulatedCallScreen(
+          contactName: widget.chatModel.name,
+          isVideo: true,
+        ),
+      ),
+    );
   }
 
   void _toggleEmoji() {
@@ -417,19 +418,18 @@ class _IndividualPageState extends State<IndividualPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete chat'),
-        content: const Text(
-          'Erase all messages? This action cannot be undone.',
-        ),
+        content:
+            const Text('Erase all messages? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style:
+                ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.pop(ctx);
-
               try {
                 final batch = FirebaseFirestore.instance.batch();
                 final snap = await FirebaseFirestore.instance
@@ -441,29 +441,28 @@ class _IndividualPageState extends State<IndividualPage> {
                 for (final doc in snap.docs) {
                   batch.delete(doc.reference);
                 }
-
                 await batch.commit();
               } catch (e) {
                 _showSnack('Error deleting chat');
               }
             },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Delete',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMessage(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+  Widget _buildMessage(
+      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     final isMe = data['senderUid'] == _myUid;
     final content = data['content'] as String? ?? '';
     final ts = data['timestamp'] as Timestamp?;
-    final time =
-        ts != null ? TimeOfDay.fromDateTime(ts.toDate()).format(context) : '';
+    final time = ts != null
+        ? TimeOfDay.fromDateTime(ts.toDate()).format(context)
+        : '';
 
     if (_searchQuery.isNotEmpty &&
         !content.toLowerCase().contains(_searchQuery.toLowerCase())) {
@@ -476,6 +475,9 @@ class _IndividualPageState extends State<IndividualPage> {
   }
 
   Widget _buildRecordingInput() {
+    final progress =
+        (_dragDx.abs() / _cancelThreshold.abs()).clamp(0.0, 1.0);
+
     return Expanded(
       child: Container(
         margin: const EdgeInsets.only(left: 2, right: 2, bottom: 8),
@@ -483,19 +485,25 @@ class _IndividualPageState extends State<IndividualPage> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(23),
           ),
-          color: isCancellingAudio ? Colors.red.shade700 : Colors.grey[900],
+          color: isCancellingAudio
+              ? Colors.red.shade700
+              : Colors.grey[900],
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 14),
             child: Row(
               children: [
                 Icon(
-                  isCancellingAudio ? Icons.delete_outline : Icons.mic,
+                  isCancellingAudio
+                      ? Icons.delete_outline
+                      : Icons.mic,
                   color: Colors.white,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Transform.translate(
-                    offset: Offset(_dragDx < 0 ? _dragDx * 0.15 : 0, 0),
+                    offset:
+                        Offset(_dragDx < 0 ? _dragDx * 0.15 : 0, 0),
                     child: Text(
                       isCancellingAudio
                           ? 'Release to delete'
@@ -503,9 +511,7 @@ class _IndividualPageState extends State<IndividualPage> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                      ),
+                          color: Colors.white, fontSize: 15),
                     ),
                   ),
                 ),
@@ -514,7 +520,8 @@ class _IndividualPageState extends State<IndividualPage> {
                     padding: const EdgeInsets.only(right: 8),
                     child: Icon(
                       Icons.keyboard_double_arrow_left,
-                      color: Colors.white.withValues(),
+                      color: Colors.white
+                          .withOpacity(1 - (progress * 0.7)),
                     ),
                   ),
                 Text(
@@ -613,7 +620,9 @@ class _IndividualPageState extends State<IndividualPage> {
               backgroundColor:
                   isRecordingAudio ? Colors.redAccent : cs.secondary,
               child: Icon(
-                isRecordingAudio ? Icons.send_rounded : Icons.mic_none_rounded,
+                isRecordingAudio
+                    ? Icons.send_rounded
+                    : Icons.mic_none_rounded,
                 color: Colors.white,
               ),
             ),
@@ -647,7 +656,7 @@ class _IndividualPageState extends State<IndividualPage> {
             autofocus: true,
             style: const TextStyle(color: Colors.white),
             decoration: const InputDecoration(
-              hintText: 'Buscar en el chat...',
+              hintText: 'Search in chat...',
               hintStyle: TextStyle(color: Colors.white70),
               border: InputBorder.none,
             ),
@@ -658,6 +667,10 @@ class _IndividualPageState extends State<IndividualPage> {
         ),
       );
     }
+
+    final lastSeen = widget.chatModel.time.isNotEmpty
+        ? 'last seen at ${widget.chatModel.time}'
+        : 'tap for contact info';
 
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
@@ -695,7 +708,8 @@ class _IndividualPageState extends State<IndividualPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ViewContactPage(contact: widget.chatModel),
+                builder: (_) =>
+                    ViewContactPage(contact: widget.chatModel),
               ),
             );
           },
@@ -712,9 +726,9 @@ class _IndividualPageState extends State<IndividualPage> {
                   ),
                 ),
                 Text(
-                  'last seen at ${widget.chatModel.time}',
+                  lastSeen,
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Colors.white70,
                   ),
                 ),
@@ -724,11 +738,11 @@ class _IndividualPageState extends State<IndividualPage> {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: _startVideoCall,
             icon: const Icon(Icons.videocam),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: _startVoiceCall,
             icon: const Icon(Icons.call),
           ),
           PopupMenuButton<String>(
@@ -757,25 +771,16 @@ class _IndividualPageState extends State<IndividualPage> {
             },
             itemBuilder: (_) => const [
               PopupMenuItem(
-                value: 'View Contact',
-                child: Text('View Contact'),
-              ),
+                  value: 'View Contact', child: Text('View Contact')),
               PopupMenuItem(
-                value: 'Media',
-                child: Text('Media, links and docs'),
-              ),
+                  value: 'Media',
+                  child: Text('Media, links and docs')),
+              PopupMenuItem(value: 'Search', child: Text('Search')),
               PopupMenuItem(
-                value: 'Search',
-                child: Text('Search'),
-              ),
+                  value: 'Mute',
+                  child: Text('Mute Notifications')),
               PopupMenuItem(
-                value: 'Mute',
-                child: Text('Mute Notifications'),
-              ),
-              PopupMenuItem(
-                value: 'Clear chat',
-                child: Text('Clear chat'),
-              ),
+                  value: 'Clear chat', child: Text('Clear chat')),
             ],
           ),
         ],
@@ -788,21 +793,15 @@ class _IndividualPageState extends State<IndividualPage> {
     final otherUid = _otherUid;
 
     if (myUid == null || myUid.isEmpty) {
-      return const Center(
-        child: Text('There is no authenticated user'),
-      );
+      return const Center(child: Text('No authenticated user'));
     }
-
     if (otherUid.isEmpty) {
       return const Center(
-        child: Text('The chat user does not have a valid UID'),
-      );
+          child: Text('Chat user has no valid UID'));
     }
-
     if (_conversationId.isEmpty) {
       return const Center(
-        child: Text('Failed to create conversation'),
-      );
+          child: Text('Failed to create conversation'));
     }
 
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -815,11 +814,8 @@ class _IndividualPageState extends State<IndividualPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.red,
-                    size: 48,
-                  ),
+                  const Icon(Icons.error_outline,
+                      color: Colors.red, size: 48),
                   const SizedBox(height: 12),
                   Text(
                     'Error:\n${snapshot.error}',
@@ -833,32 +829,26 @@ class _IndividualPageState extends State<IndividualPage> {
         }
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         final docs = snapshot.data?.docs ?? [];
 
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _scrollToBottom());
 
         if (docs.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.chat_bubble_outline,
-                  size: 60,
-                  color: Colors.grey[400],
-                ),
+                Icon(Icons.chat_bubble_outline,
+                    size: 60, color: Colors.grey[400]),
                 const SizedBox(height: 12),
                 Text(
-                  'Sé el primero en escribir!',
+                  'Be the first to write!',
                   style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 15,
-                  ),
+                      color: Colors.grey[500], fontSize: 15),
                 ),
               ],
             ),
@@ -867,7 +857,8 @@ class _IndividualPageState extends State<IndividualPage> {
 
         return ListView.builder(
           controller: _scrollController,
-          padding: const EdgeInsets.only(bottom: 12, top: 8),
+          padding:
+              const EdgeInsets.only(bottom: 12, top: 8),
           itemCount: docs.length,
           itemBuilder: (_, i) => _buildMessage(docs[i]),
         );
@@ -893,26 +884,20 @@ class _IndividualPageState extends State<IndividualPage> {
           body: PopScope(
             canPop: !show,
             onPopInvokedWithResult: (didPop, _) {
-              if (show) {
-                setState(() => show = false);
-              }
+              if (show) setState(() => show = false);
             },
             child: Column(
               children: [
                 Expanded(child: _buildBody()),
                 if (_searchMode && _searchQuery.isNotEmpty)
                   Container(
-                    color: cs.primary.withValues(),
+                    color: cs.primary.withOpacity(0.1),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
+                        horizontal: 16, vertical: 4),
                     child: Text(
-                      'Buscando: "$_searchQuery"',
+                      'Searching: "$_searchQuery"',
                       style: TextStyle(
-                        color: cs.secondary,
-                        fontSize: 13,
-                      ),
+                          color: cs.secondary, fontSize: 13),
                     ),
                   ),
                 if (!_searchMode)
@@ -932,6 +917,168 @@ class _IndividualPageState extends State<IndividualPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SimulatedCallScreen extends StatefulWidget {
+  final String contactName;
+  final bool isVideo;
+  const _SimulatedCallScreen(
+      {required this.contactName, required this.isVideo});
+
+  @override
+  State<_SimulatedCallScreen> createState() =>
+      _SimulatedCallScreenState();
+}
+
+class _SimulatedCallScreenState extends State<_SimulatedCallScreen> {
+  bool _muted = false;
+  bool _speakerOn = false;
+  bool _cameraOff = false;
+  int _seconds = 0;
+  late final Stream<int> _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = Stream.periodic(
+        const Duration(seconds: 1), (i) => i + 1);
+  }
+
+  String _fmt(int s) {
+    final m = (s ~/ 60).toString().padLeft(2, '0');
+    final sec = (s % 60).toString().padLeft(2, '0');
+    return '$m:$sec';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1A1A2E),
+      body: SafeArea(
+        child: StreamBuilder<int>(
+          stream: _ticker,
+          builder: (context, snap) {
+            _seconds = snap.data ?? 0;
+            return Column(
+              children: [
+                const SizedBox(height: 40),
+                CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.blueGrey,
+                  child: Text(
+                    widget.contactName[0].toUpperCase(),
+                    style: const TextStyle(
+                        fontSize: 40,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  widget.contactName,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _seconds == 0
+                      ? (widget.isVideo
+                          ? 'Video calling...'
+                          : 'Calling...')
+                      : _fmt(_seconds),
+                  style: const TextStyle(
+                      color: Colors.white70, fontSize: 16),
+                ),
+                const Spacer(),
+                if (widget.isVideo)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _Ctrl(
+                          icon: _cameraOff
+                              ? Icons.videocam_off
+                              : Icons.videocam,
+                          label: 'Camera',
+                          onTap: () => setState(
+                              () => _cameraOff = !_cameraOff),
+                        ),
+                        _Ctrl(
+                          icon: Icons.flip_camera_ios,
+                          label: 'Flip',
+                          onTap: () {},
+                        ),
+                      ],
+                    ),
+                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _Ctrl(
+                      icon: _muted ? Icons.mic_off : Icons.mic,
+                      label: _muted ? 'Unmute' : 'Mute',
+                      onTap: () =>
+                          setState(() => _muted = !_muted),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const CircleAvatar(
+                        radius: 32,
+                        backgroundColor: Colors.red,
+                        child: Icon(Icons.call_end,
+                            color: Colors.white, size: 32),
+                      ),
+                    ),
+                    _Ctrl(
+                      icon: _speakerOn
+                          ? Icons.volume_up
+                          : Icons.volume_down,
+                      label: 'Speaker',
+                      onTap: () => setState(
+                          () => _speakerOn = !_speakerOn),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 40),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _Ctrl extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _Ctrl(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: Colors.white24,
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(height: 6),
+          Text(label,
+              style: const TextStyle(
+                  color: Colors.white70, fontSize: 11)),
+        ],
+      ),
     );
   }
 }

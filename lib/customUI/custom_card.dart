@@ -12,6 +12,14 @@ class CustomCard extends StatelessWidget {
   final ChatModel chatModel;
   final ChatModel sourceChat;
 
+  String get _subtitleText {
+    final msg = chatModel.currentMessage.trim();
+    if (msg.isNotEmpty) return msg;
+    return chatModel.status.isNotEmpty ? chatModel.status : 'No messages yet';
+  }
+
+  bool get _hasMessage => chatModel.currentMessage.trim().isNotEmpty;
+
   @override
   Widget build(BuildContext context) {
     return InkWell(
@@ -37,15 +45,36 @@ class CustomCard extends StatelessWidget {
                 width: 37,
               ),
             ),
-            title: Text(chatModel.name),
+            title: Text(
+              chatModel.name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             subtitle: Row(
               children: [
-                Icon(Icons.done_all),
-                SizedBox(width: 3),
-                Text(chatModel.currentMessage, style: TextStyle(fontSize: 13)),
+                if (_hasMessage) ...[
+                  const Icon(Icons.done_all, size: 16, color: Colors.grey),
+                  const SizedBox(width: 3),
+                ],
+                Expanded(
+                  child: Text(
+                    _subtitleText,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _hasMessage ? Colors.grey[700] : Colors.grey[500],
+                      fontStyle: _hasMessage ? FontStyle.normal : FontStyle.italic,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
-            trailing: Text(chatModel.time),
+            trailing: chatModel.time.isNotEmpty
+                ? Text(
+                    chatModel.time,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  )
+                : null,
           ),
           Padding(
             padding: const EdgeInsets.only(right: 20, left: 80),

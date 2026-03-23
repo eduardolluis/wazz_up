@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:whatzapp/screens/camera_share_screen.dart';
 
 class CameraView extends StatefulWidget {
   const CameraView({super.key, required this.path});
@@ -19,8 +20,17 @@ class _CameraViewState extends State<CameraView> {
     super.dispose();
   }
 
-  void sendImage() {
-    Navigator.pop(context, widget.path);
+  Future<void> _goToShareScreen() async {
+    final result = await Navigator.push<Map<String, String>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CameraShareScreen(imagePath: widget.path),
+      ),
+    );
+
+    if (!mounted || result == null) return;
+
+    Navigator.pop(context, result);
   }
 
   @override
@@ -89,12 +99,12 @@ class _CameraViewState extends State<CameraView> {
                       fontSize: 17,
                     ),
                     suffixIcon: GestureDetector(
-                      onTap: sendImage,
+                      onTap: _goToShareScreen,
                       child: CircleAvatar(
                         radius: 27,
                         backgroundColor: Colors.tealAccent[700],
                         child: const Icon(
-                          Icons.check,
+                          Icons.arrow_forward,
                           color: Colors.white,
                           size: 27,
                         ),
@@ -110,4 +120,4 @@ class _CameraViewState extends State<CameraView> {
       ),
     );
   }
-}
+} 

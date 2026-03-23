@@ -25,7 +25,7 @@ class _CameraScreenState extends State<CameraScreen> {
     super.initState();
 
     if (cameras.isEmpty) {
-      throw Exception("No hay cámaras disponibles");
+      throw Exception("No cameras available");
     }
 
     _initializeCamera(currentCameraIndex);
@@ -48,7 +48,7 @@ class _CameraScreenState extends State<CameraScreen> {
         setState(() {});
       }
     } on CameraException catch (e) {
-      debugPrint("Error al inicializar cámara: ${e.description}");
+      debugPrint("Camera init error: ${e.description}");
     }
   }
 
@@ -66,7 +66,7 @@ class _CameraScreenState extends State<CameraScreen> {
         currentFlashMode = newMode;
       });
     } on CameraException catch (e) {
-      debugPrint("Error al cambiar flash: ${e.description}");
+      debugPrint("Flash error: ${e.description}");
     }
   }
 
@@ -80,7 +80,7 @@ class _CameraScreenState extends State<CameraScreen> {
       await _cameraController.dispose();
       await _initializeCamera(currentCameraIndex);
     } on CameraException catch (e) {
-      debugPrint("Error al cambiar cámara: ${e.description}");
+      debugPrint("Flip camera error: ${e.description}");
     }
   }
 
@@ -93,18 +93,18 @@ class _CameraScreenState extends State<CameraScreen> {
 
       if (!mounted) return;
 
-      final String? imagePath = await Navigator.push<String>(
+      final result = await Navigator.push<Map<String, String>>(
         context,
         MaterialPageRoute(builder: (context) => CameraView(path: photo.path)),
       );
 
       if (!mounted) return;
 
-      if (imagePath != null && imagePath.isNotEmpty) {
-        Navigator.pop(context, imagePath);
+      if (result != null) {
+        Navigator.pop(context, result);
       }
     } on CameraException catch (e) {
-      debugPrint("Error al tomar foto: ${e.description}");
+      debugPrint("Take photo error: ${e.description}");
     }
   }
 
@@ -127,7 +127,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 if (!_cameraController.value.isInitialized) {
                   return const Center(
                     child: Text(
-                      'La cámara no está inicializada',
+                      'Camera not initialized',
                       style: TextStyle(color: Colors.white),
                     ),
                   );
@@ -136,7 +136,7 @@ class _CameraScreenState extends State<CameraScreen> {
               } else if (snapshot.hasError) {
                 return const Center(
                   child: Text(
-                    'Error al inicializar la cámara',
+                    'Error initializing camera',
                     style: TextStyle(color: Colors.white),
                   ),
                 );
@@ -190,9 +190,7 @@ class _CameraScreenState extends State<CameraScreen> {
                               isRecording = true;
                             });
                           } on CameraException catch (e) {
-                            debugPrint(
-                              "Error al iniciar video: ${e.description}",
-                            );
+                            debugPrint("Start video error: ${e.description}");
                           }
                         },
                         onLongPressUp: () async {
@@ -218,9 +216,7 @@ class _CameraScreenState extends State<CameraScreen> {
                               ),
                             );
                           } on CameraException catch (e) {
-                            debugPrint(
-                              "Error al detener video: ${e.description}",
-                            );
+                            debugPrint("Stop video error: ${e.description}");
                           }
                         },
                         onTap: () {

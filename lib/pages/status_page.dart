@@ -31,7 +31,7 @@ class _StatusPageState extends State<StatusPage> {
           ),
           ListTile(
             leading: const Icon(Icons.text_fields, color: Colors.teal),
-            title: const Text('Status de texto'),
+            title: const Text('Text status'),
             onTap: () {
               Navigator.pop(context);
               _showTextStatusEditor();
@@ -88,7 +88,7 @@ class _StatusPageState extends State<StatusPage> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Estado publicado'),
+                        content: Text('Status published'),
                         backgroundColor: Colors.green),
                   );
                 }
@@ -295,14 +295,14 @@ class _StatusPageState extends State<StatusPage> {
               children: [
                 GestureDetector(
                   onTap: myDocs.isNotEmpty
-                      ? () => _openViewer(myDocs, 'Mi estado')
+                      ? () => _openViewer(myDocs, 'My Status')
                       : _showAddStatusOptions,
                   child: HeadOwnStatus(),
                 ),
                 if (myDocs.isNotEmpty) ...[
                   _sectionLabel('My Statuses', context),
                   GestureDetector(
-                    onTap: () => _openViewer(myDocs, 'My Statuses'),
+                    onTap: () => _openViewer(myDocs, 'My Status'),
                     child: OtherStatus(
                       name: 'My Status (${myDocs.length})',
                       time: _docTime(myDocs.last, context),
@@ -317,7 +317,7 @@ class _StatusPageState extends State<StatusPage> {
                   ...grouped.entries.map((entry) {
                     final userDocs = entry.value;
                     final data = userDocs.first.data() as Map<String, dynamic>;
-                    final name = data['name'] as String? ?? 'Usuario';
+                    final name = data['name'] as String? ?? 'User';
                     final viewers =
                         (data['viewers'] as List?)?.cast<String>() ?? [];
                     return GestureDetector(
@@ -344,7 +344,7 @@ class _StatusPageState extends State<StatusPage> {
                             size: 70, color: Colors.grey[400]),
                         const SizedBox(height: 16),
                         Text(
-                          'There are no recent status',
+                          'No recent statuses',
                           style:
                               TextStyle(color: Colors.grey[500], fontSize: 16),
                         ),
@@ -389,8 +389,6 @@ class _StatusPageState extends State<StatusPage> {
   }
 }
 
-// ─────────────── Firestore Status Viewer ───────────────
-
 class FirestoreStatusViewer extends StatefulWidget {
   final List<QueryDocumentSnapshot> statusDocs;
   final String name;
@@ -426,7 +424,7 @@ class _FirestoreStatusViewerState extends State<FirestoreStatusViewer>
       setState(() => _idx++);
       _start();
     } else {
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
     }
   }
 
@@ -466,30 +464,35 @@ class _FirestoreStatusViewerState extends State<FirestoreStatusViewer>
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTapUp: (details) {
-          if (details.globalPosition.dx <
-              MediaQuery.of(context).size.width / 2) {
+          final half = MediaQuery.of(context).size.width / 2;
+          if (details.globalPosition.dx < half) {
             _prev();
           } else {
             _next();
           }
         },
-        child: Stack(children: [
-          // Content
-          if (type == 'image')
-            Positioned.fill(
-              child: Image.network(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (type == 'image')
+              Image.network(
                 content,
                 fit: BoxFit.cover,
                 loadingBuilder: (_, child, p) => p == null
                     ? child
                     : const Center(
                         child: CircularProgressIndicator(color: Colors.white)),
-              ),
-            )
-          else
-            Positioned.fill(
-              child: Container(
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.black,
+                  child: const Center(
+                    child: Icon(Icons.broken_image, color: Colors.white, size: 60),
+                  ),
+                ),
+              )
+            else
+              Container(
                 color: bgColor,
                 child: Center(
                   child: Padding(
@@ -499,146 +502,186 @@ class _FirestoreStatusViewerState extends State<FirestoreStatusViewer>
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 24,
+                        fontSize: 26,
                         fontWeight: FontWeight.w600,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 8,
+                            color: Colors.black38,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
 
-          if (type == 'image' && caption.isNotEmpty)
-            Positioned(
-              bottom: 80,
-              left: 16,
-              right: 16,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  caption,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.center,
+                  colors: [Colors.black54, Colors.transparent],
                 ),
               ),
             ),
 
-          // Top bar
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Row(
-                  children: List.generate(
-                      widget.statusDocs.length,
-                      (i) => Expanded(
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 2),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: i < _idx
-                                    ? Container(height: 3, color: Colors.white)
-                                    : i == _idx
-                                        ? AnimatedBuilder(
-                                            animation: _ctrl,
-                                            builder: (_, __) =>
-                                                LinearProgressIndicator(
-                                              value: _ctrl.value,
-                                              minHeight: 3,
-                                              backgroundColor: Colors.white38,
-                                              valueColor:
-                                                  const AlwaysStoppedAnimation(
-                                                      Colors.white),
-                                            ),
-                                          )
-                                        : Container(
-                                            height: 3, color: Colors.white38),
-                              ),
+            SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 6),
+                    child: Row(
+                      children: List.generate(
+                        widget.statusDocs.length,
+                        (i) => Expanded(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 2),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: i < _idx
+                                  ? Container(
+                                      height: 3, color: Colors.white)
+                                  : i == _idx
+                                      ? AnimatedBuilder(
+                                          animation: _ctrl,
+                                          builder: (_, __) =>
+                                              LinearProgressIndicator(
+                                            value: _ctrl.value,
+                                            minHeight: 3,
+                                            backgroundColor: Colors.white38,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation(
+                                                    Colors.white),
+                                          ),
+                                        )
+                                      : Container(
+                                          height: 3,
+                                          color: Colors.white38),
                             ),
-                          )),
-                ),
-                const SizedBox(height: 10),
-                Row(children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.blueGrey,
-                    child: Text(
-                      widget.name[0].toUpperCase(),
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
                           ),
                         ),
-                        Text(_timeAgo(ts),
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 12)),
-                      ]),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ]),
-              ]),
-            ),
-          ),
-
-          // Reply bar
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white54),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Text(
-                        'Responder...',
-                        style: TextStyle(color: Colors.white70, fontSize: 15),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  CircleAvatar(
-                    backgroundColor: Colors.white24,
-                    child: const Icon(Icons.emoji_emotions_outlined,
-                        color: Colors.white),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 4),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.blueGrey,
+                          child: Text(
+                            widget.name.isNotEmpty
+                                ? widget.name[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.name,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              Text(
+                                _timeAgo(ts),
+                                style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  CircleAvatar(
-                    backgroundColor: Colors.white24,
-                    child: const Icon(Icons.forward, color: Colors.white),
-                  ),
-                ]),
+                ],
               ),
             ),
-          ),
-        ]),
+
+            if (type == 'image' && caption.isNotEmpty)
+              Positioned(
+                bottom: 90,
+                left: 16,
+                right: 16,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    caption,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.white, fontSize: 15),
+                  ),
+                ),
+              ),
+
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  child: Row(children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white54),
+                          borderRadius: BorderRadius.circular(24),
+                          color: Colors.black26,
+                        ),
+                        child: const Text(
+                          'Reply...',
+                          style: TextStyle(
+                              color: Colors.white70, fontSize: 15),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    CircleAvatar(
+                      backgroundColor: Colors.white24,
+                      child: const Icon(Icons.emoji_emotions_outlined,
+                          color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    CircleAvatar(
+                      backgroundColor: Colors.white24,
+                      child: const Icon(Icons.forward, color: Colors.white),
+                    ),
+                  ]),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
